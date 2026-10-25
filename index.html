@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>InBody 身體組成追蹤與統計系統</title>
+  
+  <!-- 🌟 iOS PWA & Web Clip 配置 (支援 1 分鐘加入 iPhone 主畫面) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="InBody">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#b91c1c">
+
+  <!-- PWA Manifest & 高解析度 Apple Touch App 圖示 -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+      padding-top: var(--sat);
+      padding-bottom: calc(var(--sab) + 4rem);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+    /* iOS Safari 輸入框防縮放：在小螢幕強制字體 >= 16px */
+    @media screen and (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-16">
+
+  <!-- 頂部導航列 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="bg-red-700 text-white px-3 py-1.5 rounded-lg font-black tracking-wider flex items-center justify-center shadow-sm">
+            <span class="text-xl font-extrabold italic">InBody</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg font-bold text-slate-900 tracking-tight">身體組成數據追蹤與分析系統</h1>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta & Actions -->
+        <div class="flex items-center gap-2.5">
+          <!-- 1. 使用者切換器與「修改使用者」按鈕 -->
+          <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+            <div class="flex items-center px-2 py-1 text-xs text-slate-600">
+              <i data-lucide="users" class="w-4 h-4 text-slate-500 mr-1.5"></i>
+              <select id="userSelect" class="bg-transparent font-bold text-slate-800 outline-none cursor-pointer pr-1 text-xs"></select>
+            </div>
+            <button id="btnManageUsers" class="inline-flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1 rounded-md text-xs font-bold border border-slate-200 shadow-xs transition-colors" title="新增、修改或刪除使用者">
+              <i data-lucide="user-cog" class="w-3.5 h-3.5 text-blue-600"></i>
+              <span>修改使用者</span>
+            </button>
+          </div>
+
+          <!-- 2. 檢測日期下拉選單 -->
+          <div class="flex items-center bg-slate-100 rounded-lg px-2.5 py-1.5 border border-slate-200">
+            <i data-lucide="calendar" class="w-4 h-4 text-slate-500 mr-1.5"></i>
+            <select id="recordSelect" class="bg-transparent text-xs font-semibold text-slate-800 outline-none cursor-pointer"></select>
+          </div>
+
+          <!-- 3. 新增檢測 -->
+          <button id="btnNewRecord" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-lg shadow-sm transition-all active:scale-95">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>新增檢測</span>
+          </button>
+
+          <!-- 4. 備份 -->
+          <button id="btnBackup" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-200 transition-colors">
+            <i data-lucide="database" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span class="hidden md:inline">備份</span>
+          </button>
+
+          <!-- 5. 📱 iPhone 隨身版按鈕 -->
+          <button id="btnIosGuide" onclick="openIosGuideModal()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 transition-colors shadow-xs" title="在 iPhone 上加入主畫面隨身使用">
+            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-rose-600"></i>
+            <span class="hidden sm:inline">📱 加入 iPhone</span>
+            <span class="sm:hidden">📱App</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主內容 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+    <!-- 檢測基本報告條 (無冗餘文字) -->
+    <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-1.5 h-8 bg-red-600 rounded-full"></div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-400">受測者報告</span>
+            <span id="badgeGenderPill" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              -
+            </span>
+            <span id="badgeUserMeta" class="text-xs text-slate-600 font-medium">-</span>
+          </div>
+          <div class="text-base font-extrabold text-slate-900 mt-0.5" id="currentRecordTitle">
+            尚無檢測資料
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2" id="currentRecordActions">
+        <button id="btnEditCurrent" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg border border-slate-200 transition-colors cursor-pointer">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5 text-slate-600"></i>
+          <span>編輯此筆數據</span>
+        </button>
+        <button id="btnDeleteCurrent" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 transition-colors cursor-pointer">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>刪除紀錄</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 空白引導區塊 (當無使用者或無紀錄時呈現) -->
+    <div id="emptyNoticeBanner" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center shadow-xs">
+      <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="clipboard-list" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-900 mb-1" id="emptyNoticeTitle">目前尚無使用者資料</h3>
+      <p class="text-xs text-slate-500 max-w-md mx-auto mb-5" id="emptyNoticeDesc">
+        點擊下方按鈕新增您的個人資料（性別、身高、年齡），開始記錄身體組成數據！
+      </p>
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="openManageUsersModal('add')" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>新增第一位使用者</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 儀表板資料區塊 -->
+    <div id="mainDashboardContent" class="space-y-6">
+      <!-- 1. 核心指標 4 大卡片 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="summaryCardsContainer">
+        <!-- 體重 -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">體重 Weight</span>
+            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="scale" class="w-5 h-5"></i></div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-900" id="cardWeight">-</span>
+            <span class="text-sm font-medium text-slate-500">kg</span>
+            <span id="cardWeightDiff" class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">-</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <span id="cardWeightRange">正常範圍: -</span>
+            <span class="font-semibold text-slate-700" id="cardBmi">BMI -</span>
+          </div>
+        </div>
+
+        <!-- 骨骼肌重 -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">骨骼肌重 SMM</span>
+            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="dumbbell" class="w-5 h-5"></i></div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-900" id="cardSmm">-</span>
+            <span class="text-sm font-medium text-slate-500">kg</span>
+            <span id="cardSmmDiff" class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">-</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <span id="cardSmmRange">標準參考: -</span>
+            <span class="font-semibold text-indigo-600" id="cardSmmStatus">-</span>
+          </div>
+        </div>
+
+        <!-- 體脂率 (含自動換算之脂肪重) -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">體脂率 PBF</span>
+            <div class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="percent" class="w-5 h-5"></i></div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-900" id="cardPbf">-</span>
+            <span class="text-sm font-medium text-slate-500">%</span>
+            <span id="cardPbfDiff" class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">-</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <span id="cardPbfRange">標準區間: -</span>
+            <span class="font-semibold text-rose-600" id="cardBfm">脂肪 - kg</span>
+          </div>
+        </div>
+
+        <!-- 內臟脂肪等級 -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">內臟脂肪等級</span>
+            <div class="p-2 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="flame" class="w-5 h-5"></i></div>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-900" id="cardVisceral">-</span>
+            <span id="cardVisceralBadge" class="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">-</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <span>標準範圍: 1 ~ 9 等級</span>
+            <span class="font-medium text-slate-600">警戒閾值 10 級</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 綜合指標摘要條 (已移除腰臀比) -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 bg-red-600 text-white rounded-lg"><i data-lucide="award" class="w-6 h-6"></i></div>
+          <div>
+            <div class="text-xs text-slate-300">InBody 評分</div>
+            <div class="text-2xl font-black"><span id="inbodyScoreVal">-</span> <span class="text-sm font-normal text-slate-300">/ 100 分</span></div>
+          </div>
+        </div>
+        <div class="h-8 w-px bg-slate-700 hidden sm:block"></div>
+        <div>
+          <div class="text-xs text-slate-300">基礎代謝率 (BMR)</div>
+          <div class="text-base font-bold text-white"><span id="bmrVal">-</span> <span class="text-xs text-slate-300">kcal</span></div>
+        </div>
+        <div class="h-8 w-px bg-slate-700 hidden lg:block"></div>
+        <div class="flex items-center gap-4 bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-700 text-xs">
+          <div><span class="text-slate-400">目標體重:</span> <span class="font-bold text-white" id="targetWeightVal">- kg</span></div>
+          <div><span class="text-slate-400">體重控制:</span> <span class="font-bold text-rose-400" id="weightControlVal">- kg</span></div>
+          <div><span class="text-slate-400">脂肪控制:</span> <span class="font-bold text-rose-400" id="fatControlVal">- kg</span></div>
+          <div><span class="text-slate-400">肌肉控制:</span> <span class="font-bold text-emerald-400" id="muscleControlVal">+0.0 kg</span></div>
+        </div>
+      </div>
+
+      <!-- 2. 肌肉脂肪分析與肥胖評估 (3段水平長條圖) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-red-600"></div>
+            <h2 class="text-base font-bold text-slate-900">肌肉脂肪分析與肥胖評估</h2>
+          </div>
+          <span class="text-xs text-slate-500 font-medium">基準參考：低 / 正常 / 高 三區間</span>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-bold text-slate-800">肌肉脂肪分析 (Muscle-Fat Analysis)</h3>
+              <div class="flex items-center gap-4 text-xs font-semibold text-slate-500">
+                <span class="w-24 text-center">低 (Under)</span>
+                <span class="w-32 text-center text-slate-800 font-bold bg-slate-200/60 py-0.5 rounded">正常 (Normal)</span>
+                <span class="w-24 text-center">高 (Over)</span>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <!-- 體重 Bar -->
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-700">體重 (kg)</span>
+                  <span class="text-slate-400" id="barWeightRange">標準區間: -</span>
+                </div>
+                <div class="relative h-6 bg-slate-200 rounded-md overflow-hidden flex">
+                  <div class="w-[30%] border-r border-dashed border-slate-400 bg-amber-500/10"></div>
+                  <div class="w-[40%] border-r border-dashed border-slate-400 bg-emerald-500/10"></div>
+                  <div class="w-[30%] bg-rose-500/10"></div>
+                  <div id="barWeight" class="absolute top-1 bottom-1 left-0 bg-slate-900 rounded-r-md transition-all duration-500 flex items-center justify-end pr-2 text-white text-xs font-bold" style="width: 50%;">
+                    -
+                  </div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                  <span>55%</span><span>70%</span><span>85%</span><span class="font-bold text-slate-600">100%</span><span>115%</span><span>130%</span><span>160%</span><span>205%</span>
+                </div>
+              </div>
+
+              <!-- 骨骼肌重 Bar -->
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-700">骨骼肌重 (SMM kg)</span>
+                  <span class="text-slate-400" id="barSmmRange">標準區間: -</span>
+                </div>
+                <div class="relative h-6 bg-slate-200 rounded-md overflow-hidden flex">
+                  <div class="w-[30%] border-r border-dashed border-slate-400 bg-amber-500/10"></div>
+                  <div class="w-[40%] border-r border-dashed border-slate-400 bg-emerald-500/10"></div>
+                  <div class="w-[30%] bg-rose-500/10"></div>
+                  <div id="barSmm" class="absolute top-1 bottom-1 left-0 bg-indigo-700 rounded-r-md transition-all duration-500 flex items-center justify-end pr-2 text-white text-xs font-bold" style="width: 50%;">
+                    -
+                  </div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                  <span>70%</span><span>80%</span><span>90%</span><span class="font-bold text-slate-600">100%</span><span>110%</span><span>120%</span><span>140%</span><span>170%</span>
+                </div>
+              </div>
+
+              <!-- 體脂肪重 Bar (自動換算之脂肪重) -->
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-700">體脂肪重 (BFM kg)</span>
+                  <span class="text-slate-400" id="barBfmRange">標準區間: -</span>
+                </div>
+                <div class="relative h-6 bg-slate-200 rounded-md overflow-hidden flex">
+                  <div class="w-[30%] border-r border-dashed border-slate-400 bg-amber-500/10"></div>
+                  <div class="w-[40%] border-r border-dashed border-slate-400 bg-emerald-500/10"></div>
+                  <div class="w-[30%] bg-rose-500/10"></div>
+                  <div id="barBfm" class="absolute top-1 bottom-1 left-0 bg-rose-600 rounded-r-md transition-all duration-500 flex items-center justify-end pr-2 text-white text-xs font-bold" style="width: 50%;">
+                    -
+                  </div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                  <span>40%</span><span>60%</span><span>80%</span><span class="font-bold text-slate-600">100%</span><span>160%</span><span>220%</span><span>340%</span><span>520%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 肥胖分析與評估 Checkbox -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-200">
+            <div class="lg:col-span-2 space-y-4">
+              <h3 class="text-sm font-bold text-slate-800">肥胖分析 (Obesity Analysis)</h3>
+              <!-- BMI -->
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-700">身體質量指數 (BMI kg/m²)</span>
+                  <span class="font-bold text-slate-800" id="valBmi">-</span>
+                </div>
+                <div class="relative h-5 bg-slate-200 rounded-md overflow-hidden flex">
+                  <div class="w-[28%] border-r border-dashed border-slate-400 bg-amber-500/10"></div>
+                  <div class="w-[28%] border-r border-dashed border-slate-400 bg-emerald-500/10"></div>
+                  <div class="w-[44%] bg-rose-500/10"></div>
+                  <div id="barBmiVal" class="absolute top-0.5 bottom-0.5 left-0 bg-slate-800 rounded-r-md flex items-center justify-end pr-1.5 text-[10px] text-white font-bold" style="width: 50%;">-</div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                  <span>10.0</span><span>15.0</span><span class="font-bold text-slate-600">18.5 (低)</span><span class="font-bold text-slate-600">24.0 (正常)</span><span>27.0</span><span>35.0</span><span>55.0</span>
+                </div>
+              </div>
+
+              <!-- PBF -->
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-700">體脂率 (PBF %)</span>
+                  <span class="font-bold text-rose-600" id="valPbf">-%</span>
+                </div>
+                <div class="relative h-5 bg-slate-200 rounded-md overflow-hidden flex">
+                  <div class="w-[24%] border-r border-dashed border-slate-400 bg-amber-500/10"></div>
+                  <div class="w-[24%] border-r border-dashed border-slate-400 bg-emerald-500/10"></div>
+                  <div class="w-[52%] bg-rose-500/10"></div>
+                  <div id="barPbfVal" class="absolute top-0.5 bottom-0.5 left-0 bg-rose-600 rounded-r-md flex items-center justify-end pr-1.5 text-[10px] text-white font-bold" style="width: 50%;">-%</div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1" id="pbfScaleMarks"></div>
+              </div>
+            </div>
+
+            <!-- Checkbox 評估 -->
+            <div class="bg-slate-50 rounded-lg border border-slate-200 p-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 mb-3">肥胖評估 (Obesity Evaluation)</h4>
+              <div class="mb-4">
+                <div class="text-xs font-semibold text-slate-600 mb-1.5">BMI 狀態</div>
+                <div class="grid grid-cols-2 gap-2 text-xs" id="bmiCheckboxGroup"></div>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-slate-600 mb-1.5">體脂率 (PBF) 狀態</div>
+                <div class="grid grid-cols-2 gap-2 text-xs" id="pbfCheckboxGroup"></div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-200 text-[11px] text-slate-500" id="obesityNote">
+                -
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 部位別分析 (雙人體圖示 - 透明無白底排版) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
+            <h2 class="text-base font-bold text-slate-900">部位別分析 (四肢肌肉量與皮下脂肪量)</h2>
+          </div>
+          <span class="text-xs text-slate-500">透明無背景圖文排版</span>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <!-- 肌肉分析 -->
+          <div class="bg-slate-50/70 rounded-xl p-5 border border-slate-200 relative">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+              <span class="text-sm font-bold text-slate-800">部位別肌肉分析 (四肢肌肉)</span>
+              <span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-bold border border-indigo-200" id="segmentalLeanTotal">骨骼肌: - kg</span>
+            </div>
+            <div class="relative h-[340px] flex items-center justify-center">
+              <div id="leanSilhouetteSvg"></div>
+
+              <!-- 數據：純文字無白色背景 -->
+              <div class="absolute top-8 left-2 text-center min-w-[95px] select-none" id="leanLA">
+                <div class="text-[11px] font-bold text-slate-500">左臂 (Left)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanLA">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctLeanLA">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800" id="badgeLeanLA">正常</span>
+              </div>
+
+              <div class="absolute top-8 right-2 text-center min-w-[95px] select-none" id="leanRA">
+                <div class="text-[11px] font-bold text-slate-500">右臂 (Right)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanRA">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctLeanRA">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800" id="badgeLeanRA">正常</span>
+              </div>
+
+              <div class="absolute top-24 left-1/2 -translate-x-1/2 text-center min-w-[95px] select-none z-10" id="leanTR">
+                <div class="text-[11px] font-bold text-slate-600">軀幹 (Trunk)</div>
+                <div class="text-base font-extrabold text-slate-950 leading-tight" id="valLeanTR">- kg</div>
+                <div class="text-xs font-semibold text-slate-700" id="pctLeanTR">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800" id="badgeLeanTR">正常</span>
+              </div>
+
+              <div class="absolute bottom-3 left-2 text-center min-w-[95px] select-none" id="leanLL">
+                <div class="text-[11px] font-bold text-slate-500">左腿 (Left)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanLL">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctLeanLL">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeLeanLL">正常</span>
+              </div>
+
+              <div class="absolute bottom-3 right-2 text-center min-w-[95px] select-none" id="leanRL">
+                <div class="text-[11px] font-bold text-slate-500">右腿 (Right)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanRL">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctLeanRL">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeLeanRL">正常</span>
+              </div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500 flex justify-between" id="leanFooterNote">
+              <span>四肢與軀幹肌肉量分析</span>
+              <span class="text-indigo-700 font-semibold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">已自動由 % 換算實際重量</span>
+            </div>
+          </div>
+
+          <!-- 脂肪分析 -->
+          <div class="bg-slate-50/70 rounded-xl p-5 border border-slate-200 relative">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+              <span class="text-sm font-bold text-slate-800">部位別脂肪分析 (四肢皮下脂肪)</span>
+              <span class="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded font-bold border border-rose-200" id="segmentalFatTotal">體脂肪: - kg</span>
+            </div>
+            <div class="relative h-[340px] flex items-center justify-center">
+              <div id="fatSilhouetteSvg"></div>
+
+              <!-- 數據：純文字無白色背景 -->
+              <div class="absolute top-8 left-2 text-center min-w-[95px] select-none" id="fatLA">
+                <div class="text-[11px] font-bold text-slate-500">左臂 (Left)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatLA">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctFatLA">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-800" id="badgeFatLA">正常</span>
+              </div>
+
+              <div class="absolute top-8 right-2 text-center min-w-[95px] select-none" id="fatRA">
+                <div class="text-[11px] font-bold text-slate-500">右臂 (Right)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatRA">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctFatRA">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-800" id="badgeFatRA">正常</span>
+              </div>
+
+              <div class="absolute top-24 left-1/2 -translate-x-1/2 text-center min-w-[95px] select-none z-10" id="fatTR">
+                <div class="text-[11px] font-bold text-slate-600">軀幹 (Trunk)</div>
+                <div class="text-base font-extrabold text-slate-950 leading-tight" id="valFatTR">- kg</div>
+                <div class="text-xs font-semibold text-slate-700" id="pctFatTR">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-800" id="badgeFatTR">正常</span>
+              </div>
+
+              <div class="absolute bottom-3 left-2 text-center min-w-[95px] select-none" id="fatLL">
+                <div class="text-[11px] font-bold text-slate-500">左腿 (Left)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatLL">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctFatLL">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeFatLL">正常</span>
+              </div>
+
+              <div class="absolute bottom-3 right-2 text-center min-w-[95px] select-none" id="fatRL">
+                <div class="text-[11px] font-bold text-slate-500">右腿 (Right)</div>
+                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatRL">- kg</div>
+                <div class="text-xs font-semibold text-slate-600" id="pctFatRL">-%</div>
+                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeFatRL">正常</span>
+              </div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500 flex justify-between" id="fatFooterNote">
+              <span>四肢皮下脂肪量分析</span>
+              <span class="text-rose-700 font-semibold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">已自動由 % 換算實際重量</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 身體組成歷程紀錄 (雙分頁切換 + 修改按鈕) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" id="historySection">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+            <div>
+              <h2 class="text-base font-bold text-slate-900">身體組成歷程紀錄 (Body Composition History)</h2>
+              <p class="text-xs text-slate-500" id="historyUserLabel">歷次量測長程走勢</p>
+            </div>
+          </div>
+
+          <!-- 分頁切換與修改紀錄操作 -->
+          <div class="flex items-center gap-2.5">
+            <!-- 第一頁 / 第二頁 切換 Tabs -->
+            <div class="flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-bold">
+              <button id="btnTabHistoryPage1" onclick="switchHistoryTab(1)" class="px-3 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all">
+                第一頁：基礎組成 (體重/肌/脂)
+              </button>
+              <button id="btnTabHistoryPage2" onclick="switchHistoryTab(2)" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all">
+                第二頁：四肢部位分析 (肌肉/脂肪)
+              </button>
+            </div>
+
+            <!-- 修改當前歷史紀錄按鈕 -->
+            <button onclick="editSelectedHistoryRecord()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-lg shadow-sm transition-all" title="直接修改當前選取日期的檢測數據">
+              <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+              <span>修改此筆紀錄</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- 成效摘要 -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
+              <div class="text-xs text-blue-800 font-medium">累積體重變化</div>
+              <div class="text-xl font-extrabold text-blue-950" id="statWeightLoss">0.0 kg</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-100 rounded-lg p-3">
+              <div class="text-xs text-rose-800 font-medium">累積體脂率變化</div>
+              <div class="text-xl font-extrabold text-rose-950" id="statPbfLoss">0.0%</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+              <div class="text-xs text-emerald-800 font-medium">骨骼肌維持率</div>
+              <div class="text-xl font-extrabold text-emerald-950" id="statSmmLoss">100%</div>
+            </div>
+          </div>
+
+          <!-- 折線圖 -->
+          <div class="h-72 w-full">
+            <canvas id="trendChart"></canvas>
+          </div>
+
+          <!-- 橫向歷程表格 (動態切換 第一頁 / 第二頁) -->
+          <div class="border border-slate-200 rounded-lg overflow-x-auto bg-slate-50">
+            <table class="w-full text-xs text-center border-collapse min-w-[640px]" id="historyTable">
+              <!-- Dynamically populated -->
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 🌟 使用者管理 Modal (修改使用者：新增、修改、刪除) -->
+  <div id="manageUsersModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 bg-blue-100 text-blue-700 rounded-lg">
+            <i data-lucide="user-cog" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">使用者管理 (新增、修改、刪除)</h3>
+            <p class="text-xs text-slate-500">管理所有受測者檔案，設定性別與身高標準</p>
+          </div>
+        </div>
+        <button onclick="closeManageUsersModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <!-- 1. 使用者列表清單 -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">現有使用者清單</h4>
+          <div class="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 bg-white" id="userListContainer">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 2. 新增 / 修改使用者表單 -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider" id="userFormTitle">新增受測者</h4>
+            <button type="button" id="btnCancelEditUser" onclick="resetUserForm()" class="hidden text-xs text-slate-500 hover:text-slate-800 underline">
+              取消修改，改為新增
+            </button>
+          </div>
+
+          <form id="userForm" class="space-y-3">
+            <input type="hidden" id="editingUserId" value="">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">受測者姓名</label>
+              <input type="text" id="mName" placeholder="請輸入姓名" required class="w-full text-xs p-2 border rounded-lg bg-white focus:ring-1 focus:ring-red-600 outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">生理性別</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="cursor-pointer border-2 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold" id="mLabelMale">
+                  <input type="radio" name="mGender" value="male" id="mRadioMale" class="accent-blue-600">
+                  <span class="text-blue-700">♂ 男性 (Male)</span>
+                </label>
+                <label class="cursor-pointer border-2 border-red-500 bg-red-50/50 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold" id="mLabelFemale">
+                  <input type="radio" name="mGender" value="female" id="mRadioFemale" checked class="accent-red-600">
+                  <span class="text-rose-700">♀ 女性 (Female)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">身高 (cm)</label>
+                <input type="number" step="0.1" id="mHeight" value="160.0" required class="w-full text-xs p-2 border rounded-lg bg-white focus:ring-1 focus:ring-red-600 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">年齡 (歲)</label>
+                <input type="number" id="mAge" value="30" required class="w-full text-xs p-2 border rounded-lg bg-white focus:ring-1 focus:ring-red-600 outline-none">
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+              <button type="submit" id="btnSaveUser" class="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-lg shadow-sm">
+                儲存使用者資料
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 資料新增 / 編輯 Modal (輸入體脂率%與四肢% -> 自動換算脂肪重與實際重量) -->
+  <div id="dataModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200">
+      <div class="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900" id="dataModalTitle">編輯檢測紀錄</h3>
+          <p class="text-xs text-slate-500">輸入體脂率%與四肢達成率%，系統將自動換算為實際重量 (kg)</p>
+        </div>
+        <button onclick="closeDataModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none">&times;</button>
+      </div>
+      <form id="recordForm" class="p-6 space-y-5">
+        <!-- 1. 基本資訊 -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">檢測日期</label><input type="date" id="fDate" required class="w-full text-xs p-2 border rounded bg-white"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">檢測時間</label><input type="time" id="fTime" required class="w-full text-xs p-2 border rounded bg-white"></div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">受測性別</label>
+            <select id="fGender" class="w-full text-xs p-2 border rounded bg-white font-bold">
+              <option value="female">♀ 女性 (Female)</option>
+              <option value="male">♂ 男性 (Male)</option>
+            </select>
+          </div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">身高 (cm)</label><input type="number" step="0.1" id="fHeight" value="160" required class="w-full text-xs p-2 border rounded bg-white font-bold"></div>
+          <div><label class="block text-xs font-medium text-slate-600 mb-1">年齡 (歲)</label><input type="number" id="fAge" value="30" required class="w-full text-xs p-2 border rounded bg-white font-bold"></div>
+        </div>
+
+        <!-- 2. 核心身體組成 (輸入體脂率% -> 自動換算脂肪重量) -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">核心數據 (自動換算脂肪重量)</h4>
+            <span class="text-[11px] text-blue-600 font-semibold" id="autoCalcBfmTip">脂肪重 = 體重 × 體脂率%</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">體重 (kg)</label>
+              <input type="number" step="0.1" id="fWeight" value="60.0" required class="w-full text-xs p-2 border rounded font-bold bg-white" oninput="calculateBfmOnInput()">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">骨骼肌重 (kg)</label>
+              <input type="number" step="0.1" id="fSmm" value="22.0" required class="w-full text-xs p-2 border rounded font-bold bg-white">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">體脂肪率 (%)</label>
+              <input type="number" step="0.1" id="fPbf" value="24.0" required class="w-full text-xs p-2 border rounded font-bold bg-white text-rose-600" oninput="calculateBfmOnInput()">
+              <div class="text-[11px] text-rose-600 font-bold mt-1">
+                換算脂肪重: <span id="fCalcBfmVal">14.4</span> kg
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">內臟脂肪等級 (1~20)</label>
+              <input type="number" id="fVisceral" value="5" min="1" max="20" required class="w-full text-xs p-2 border rounded font-bold bg-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 四肢肌肉量 (輸入%數 -> 自動換算實際重量kg) -->
+        <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+              四肢與軀幹肌肉量 (輸入達成率 % 數)
+            </h4>
+            <span class="text-[11px] text-indigo-700 font-medium">系統依標準肌肉分配自動換算重量 (kg)</span>
+          </div>
+          <div class="grid grid-cols-5 gap-2">
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">左臂肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctLA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgLA">2.0</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">右臂肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctRA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgRA">2.0</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">軀幹肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctTR" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgTR">18.0</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">左腿肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctLL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgLL">6.2</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">右腿肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctRL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgRL">6.2</span> kg</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 四肢皮下脂肪 (輸入%數 -> 自動換算實際重量kg) -->
+        <div class="bg-rose-50/50 p-4 rounded-xl border border-rose-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-rose-900 uppercase tracking-wider">
+              四肢與軀幹皮下脂肪 (輸入達成率 % 數)
+            </h4>
+            <span class="text-[11px] text-rose-700 font-medium">系統依標準脂肪分配自動換算重量 (kg)</span>
+          </div>
+          <div class="grid grid-cols-5 gap-2">
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">左臂脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctLA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgLA">0.9</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">右臂脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctRA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgRA">0.9</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">軀幹脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctTR" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgTR">5.0</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">左腿脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctLL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgLL">2.1</span> kg</div>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-slate-600">右腿脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctRL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgRL">2.1</span> kg</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeDataModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">取消</button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-red-700 hover:bg-red-800 rounded-lg shadow-sm">儲存數據</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 備份 Modal -->
+  <div id="backupModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">資料備份與匯出入</h3>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none">&times;</button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="exportJSON()" class="p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-800">匯出 JSON 備份</button>
+          <button onclick="exportCSV()" class="p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-800">匯出 CSV (Excel)</button>
+        </div>
+        <hr class="border-slate-100">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">匯入 JSON 備份檔</label>
+          <input type="file" id="importFileInput" accept=".json" class="w-full text-xs p-2 border rounded-lg bg-slate-50">
+        </div>
+        <hr class="border-slate-100">
+        <button onclick="clearAllData()" class="w-full text-xs font-bold text-rose-600 hover:bg-rose-50 p-2.5 rounded-lg border border-rose-200 transition-colors">
+          清空所有資料（重設為空白狀態）
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📱 iPhone 隨身版「加入主畫面」教學 Modal -->
+  <div id="iosGuideModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-gradient-to-r from-red-700 to-red-800 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="smartphone" class="w-5 h-5 text-red-200"></i>
+          <h3 class="text-base font-bold">1 分鐘加入 iPhone 主畫面</h3>
+        </div>
+        <button onclick="closeIosGuideModal()" class="text-red-200 hover:text-white text-2xl font-bold leading-none">&times;</button>
+      </div>
+      <div class="p-6 space-y-4 text-xs text-slate-700">
+        <p class="text-slate-600 font-medium">
+          配置已就緒！透過 iOS Web Clip，您能直接將此系統當成原生 App 隨身紀錄，無 Safari 網址列干擾，支援全螢幕與離線開啟。
+        </p>
+
+        <!-- 步驟卡片 -->
+        <div class="space-y-3">
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="w-6 h-6 rounded-full bg-red-700 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+            <div>
+              <span class="font-bold text-slate-900 block text-xs">使用 iPhone Safari 開啟此頁</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5">確保電腦與 iPhone 連接同一個 Wi-Fi，在 iPhone Safari 輸入本機伺服器網址：</span>
+              <div class="mt-1 flex items-center justify-between gap-1.5 bg-white p-2 rounded-lg border border-slate-200">
+                <code class="text-red-700 font-mono text-[11px] select-all font-bold break-all" id="iosHostUrl">http://192.168.0.100:8080/standalone-app.html</code>
+              </div>
+              <span class="text-[10px] text-slate-400 block mt-1">提示：電腦資料夾內附有「開啟手機連線.bat」，雙擊即可啟動區域連線。</span>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="w-6 h-6 rounded-full bg-red-700 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+            <div>
+              <span class="font-bold text-slate-900 block text-xs">點選 Safari 底部「分享」圖示</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5">點擊螢幕下方工具列中央的 <strong class="text-slate-800">方形箭頭向上</strong> 按鈕。</span>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="w-6 h-6 rounded-full bg-red-700 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+            <div>
+              <span class="font-bold text-slate-900 block text-xs">滑動點選「加入主畫面 (Add to Home Screen)」</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5">系統已自動配對好高解析度 InBody 紅色 App 圖示，確認名稱後點選右上角「新增」即可！</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-900 font-medium">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+          <span>已掛載 Apple Touch Icon 高清圖示與 Service Worker 離線快取</span>
+        </div>
+
+        <button onclick="closeIosGuideModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all">
+          我知道了，關閉說明
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 預設資料清空（依指示不預填任何舊資料）
+    let users = [];
+    let records = [];
+    let currentUserId = "";
+    let currentId = "";
+    let editingId = null;
+    let trendChartInstance = null;
+    let activeHistoryTab = 1; // 1: 基礎組成, 2: 四肢部位分析
+
+    // 動態生理標準計算
+    function getDynamicStandards(heightCm, gender = 'female') {
+      const hM = (heightCm || 160) / 100;
+      const isMale = gender === 'male';
+      const idealBmi = isMale ? 22.0 : 21.0;
+      const idealWeight = Number((hM * hM * idealBmi).toFixed(1));
+      
+      const weightMin = Number((idealWeight * 0.85).toFixed(1));
+      const weightMax = Number((idealWeight * 1.15).toFixed(1));
+
+      const smmRatio = isMale ? 0.45 : 0.41;
+      const idealSmm = Number((idealWeight * smmRatio).toFixed(1));
+      const smmMin = Number((idealSmm * 0.90).toFixed(1));
+      const smmMax = Number((idealSmm * 1.10).toFixed(1));
+
+      const fatRatio = isMale ? 0.15 : 0.23;
+      const idealBfm = Number((idealWeight * fatRatio).toFixed(1));
+      const bfmMin = Number((idealBfm * 0.67).toFixed(1));
+      const bfmMax = Number((idealBfm * 1.35).toFixed(1));
+
+      return { isMale, idealWeight, weightMin, weightMax, idealSmm, smmMin, smmMax, idealBfm, bfmMin, bfmMax };
+    }
+
+    // 四肢基準分配 (用於由 % 換算實際重量 kg)
+    function getLimbStandards(heightCm, gender) {
+      const std = getDynamicStandards(heightCm, gender);
+      return {
+        lean: {
+          la: Number((std.idealSmm * 0.098).toFixed(2)),
+          ra: Number((std.idealSmm * 0.098).toFixed(2)),
+          tr: Number((std.idealSmm * 0.87).toFixed(1)),
+          ll: Number((std.idealSmm * 0.30).toFixed(2)),
+          rl: Number((std.idealSmm * 0.30).toFixed(2)),
+        },
+        fat: {
+          la: Number((std.idealBfm * 0.075).toFixed(2)),
+          ra: Number((std.idealBfm * 0.075).toFixed(2)),
+          tr: Number((std.idealBfm * 0.41).toFixed(1)),
+          ll: Number((std.idealBfm * 0.18).toFixed(2)),
+          rl: Number((std.idealBfm * 0.18).toFixed(2)),
+        }
+      };
+    }
+
+    function parseDateTime(d, t) {
+      if (!d) return 0;
+      const parts = d.split('-');
+      const timeParts = (t || '00:00').split(':');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const hour = parseInt(timeParts[0], 10) || 0;
+      const minute = parseInt(timeParts[1], 10) || 0;
+      return new Date(year, month, day, hour, minute).getTime();
+    }
+
+    function init() {
+      // 讀取本地儲存
+      const storedUsers = localStorage.getItem("inbody_custom_users_v3");
+      if (storedUsers) {
+        try { users = JSON.parse(storedUsers); } catch(e) { users = []; }
+      } else {
+        users = [];
+      }
+
+      const storedRecords = localStorage.getItem("inbody_custom_records_v3");
+      if (storedRecords) {
+        try { records = JSON.parse(storedRecords); } catch(e) { records = []; }
+      } else {
+        records = [];
+      }
+
+      initChart();
+      renderUserSelect();
+
+      if (users.length > 0) {
+        currentUserId = users[0].id;
+        switchUser(currentUserId);
+      } else {
+        currentUserId = "";
+        showEmptyState();
+      }
+
+      lucide.createIcons();
+      bindEvents();
+    }
+
+    function saveState() {
+      localStorage.setItem("inbody_custom_users_v3", JSON.stringify(users));
+      localStorage.setItem("inbody_custom_records_v3", JSON.stringify(records));
+    }
+
+    function showEmptyState() {
+      document.getElementById("emptyNoticeBanner").classList.remove("hidden");
+      document.getElementById("mainDashboardContent").classList.add("hidden");
+      document.getElementById("currentRecordActions").classList.add("hidden");
+      document.getElementById("currentRecordTitle").textContent = "尚未建立任何使用者資料";
+      document.getElementById("badgeGenderPill").textContent = "-";
+      document.getElementById("badgeUserMeta").textContent = "-";
+    }
+
+    function hideEmptyState() {
+      document.getElementById("emptyNoticeBanner").classList.add("hidden");
+      document.getElementById("mainDashboardContent").classList.remove("hidden");
+      document.getElementById("currentRecordActions").classList.remove("hidden");
+    }
+
+    function renderUserSelect() {
+      const select = document.getElementById("userSelect");
+      select.innerHTML = "";
+
+      if (users.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "尚無使用者";
+        select.appendChild(opt);
+        return;
+      }
+
+      users.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.id;
+        const icon = u.gender === 'male' ? '♂ 男' : '♀ 女';
+        opt.textContent = `${u.name} (${icon}, ${u.height}cm)`;
+        select.appendChild(opt);
+      });
+      select.value = currentUserId;
+    }
+
+    function switchUser(userId) {
+      if (!userId || users.length === 0) {
+        showEmptyState();
+        return;
+      }
+
+      hideEmptyState();
+      currentUserId = userId;
+      document.getElementById("userSelect").value = userId;
+
+      const user = users.find(u => u.id === currentUserId) || users[0];
+      const userRecords = records.filter(r => r.userId === currentUserId);
+
+      // 更新紀錄下拉選單
+      const recordSelect = document.getElementById("recordSelect");
+      recordSelect.innerHTML = "";
+
+      if (userRecords.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "尚無檢測紀錄";
+        recordSelect.appendChild(opt);
+        currentId = "";
+      } else {
+        userRecords.forEach(r => {
+          const opt = document.createElement("option");
+          opt.value = r.id;
+          opt.textContent = `${r.date} ${r.time} (${r.weight} kg)`;
+          recordSelect.appendChild(opt);
+        });
+        currentId = userRecords[0].id;
+      }
+
+      renderCurrent();
+      updateChart();
+    }
+
+    // 向量人體輪廓 (男女專屬)
+    function renderSilhouette(gender, type) {
+      const isMale = gender === 'male';
+      const isLean = type === 'lean';
+      const accentStroke = isLean ? '#4f46e5' : '#e11d48';
+      const accentFill = isLean ? '#e0e7ff' : '#ffe4e6';
+
+      if (isMale) {
+        return `
+          <svg viewBox="0 0 200 300" class="w-48 h-72 mx-auto drop-shadow-xs">
+            <circle cx="100" cy="34" r="19" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.5" />
+            <rect x="92" y="53" width="16" height="12" rx="3" fill="${accentFill}" stroke="${accentStroke}" stroke-width="1.8" />
+            <path d="M 52 68 C 76 65, 124 65, 148 68 C 145 105, 138 152, 124 175 L 76 175 C 62 152, 55 105, 52 68 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.5" />
+            <path d="M 50 70 C 35 92, 22 135, 20 170 C 18 180, 30 182, 34 172 C 40 142, 50 105, 60 85 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.4" />
+            <path d="M 150 70 C 165 92, 178 135, 180 170 C 182 180, 170 182, 166 172 C 160 142, 150 105, 140 85 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.4" />
+            <path d="M 74 195 C 73 230, 68 260, 64 290 C 64 295, 84 295, 87 290 C 92 260, 97 230, 98 195 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.4" />
+            <path d="M 102 195 C 103 230, 108 260, 113 290 C 116 295, 136 295, 136 290 C 132 260, 127 230, 126 195 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.4" />
+          </svg>
+        `;
+      } else {
+        return `
+          <svg viewBox="0 0 200 300" class="w-48 h-72 mx-auto drop-shadow-xs">
+            <circle cx="100" cy="35" r="20" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.5" />
+            <rect x="94" y="55" width="12" height="10" rx="3" fill="${accentFill}" stroke="${accentStroke}" stroke-width="1.5" />
+            <path d="M 65 70 C 80 65, 120 65, 135 70 C 140 95, 135 150, 128 175 L 72 175 C 65 150, 60 95, 65 70 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.5" />
+            <path d="M 64 72 C 45 90, 32 135, 30 170 C 28 180, 38 182, 42 172 C 46 142, 56 105, 70 85 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.2" />
+            <path d="M 136 72 C 155 90, 168 135, 170 170 C 172 180, 162 182, 158 172 C 154 142, 144 105, 130 85 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.2" />
+            <path d="M 73 195 C 72 230, 68 260, 65 290 C 65 295, 83 295, 85 290 C 90 260, 95 230, 97 195 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.2" />
+            <path d="M 103 195 C 105 230, 110 260, 115 290 C 117 295, 135 295, 135 290 C 132 260, 128 230, 127 195 Z" fill="${accentFill}" stroke="${accentStroke}" stroke-width="2.2" />
+          </svg>
+        `;
+      }
+    }
+
+    function renderCurrent() {
+      const user = users.find(u => u.id === currentUserId);
+      if (!user) { showEmptyState(); return; }
+
+      const userRecords = records.filter(r => r.userId === currentUserId);
+      const cur = userRecords.find(r => r.id === currentId) || userRecords[0];
+
+      if (!cur) {
+        document.getElementById("currentRecordTitle").textContent = `${user.name} 尚未建立檢測紀錄`;
+        document.getElementById("badgeGenderPill").textContent = user.gender === 'male' ? '♂ 男性' : '♀ 女性';
+        document.getElementById("badgeGenderPill").className = user.gender === 'male' ? 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200' : 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+        document.getElementById("badgeUserMeta").textContent = `${user.name} | ${user.age} 歲 | ${user.height} cm`;
+        document.getElementById("historyUserLabel").textContent = `${user.name} 的歷次量測走勢`;
+        document.getElementById("mainDashboardContent").classList.remove("hidden");
+        document.getElementById("emptyNoticeBanner").classList.add("hidden");
+        renderHistoryTable();
+        return;
+      }
+
+      hideEmptyState();
+      const gender = cur.gender || user.gender || 'female';
+      const std = getDynamicStandards(cur.height || user.height, gender);
+      const isMale = std.isMale;
+
+      // 頂部受測者資訊 (無冗餘文字)
+      const gPill = document.getElementById("badgeGenderPill");
+      gPill.textContent = isMale ? '♂ 男性' : '♀ 女性';
+      gPill.className = isMale ? 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200' : 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+      document.getElementById("badgeUserMeta").textContent = `${cur.name || user.name} | ${cur.age || user.age} 歲 | ${cur.height || user.height} cm`;
+      document.getElementById("currentRecordTitle").textContent = `${cur.date} ${cur.time}`;
+      document.getElementById("historyUserLabel").textContent = `${cur.name || user.name} 的歷次量測走勢`;
+
+      // 4 大指標卡片 (自動計算之脂肪重直接呈現)
+      document.getElementById("cardWeight").textContent = cur.weight;
+      document.getElementById("cardWeightRange").textContent = `正常範圍: ${std.weightMin} ~ ${std.weightMax} kg`;
+      document.getElementById("cardBmi").textContent = `BMI ${cur.bmi}`;
+
+      document.getElementById("cardSmm").textContent = cur.smm;
+      document.getElementById("cardSmmRange").textContent = `標準參考: ${std.smmMin} ~ ${std.smmMax} kg`;
+      document.getElementById("cardSmmStatus").textContent = cur.smm >= std.idealSmm ? '肌肉充足' : (cur.smm >= std.smmMin ? '正常' : '肌肉不足');
+
+      document.getElementById("cardPbf").textContent = cur.pbf;
+      document.getElementById("cardPbfRange").textContent = `${isMale ? '標準: 10.0 ~ 20.0%' : '標準: 18.0 ~ 28.0%'}`;
+      const isPbfHigh = isMale ? cur.pbf > 20.0 : cur.pbf > 28.0;
+      document.getElementById("cardBfm").textContent = `換算脂肪重: ${cur.bfm} kg`;
+
+      document.getElementById("cardVisceral").textContent = `Level ${cur.visceralFatLevel}`;
+      const isVisceralHigh = cur.visceralFatLevel >= 10;
+      const vBadge = document.getElementById("cardVisceralBadge");
+      vBadge.textContent = isVisceralHigh ? '偏高' : '正常';
+      vBadge.className = isVisceralHigh ? 'ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200' : 'ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+      // 綜合評估
+      const fatControl = Number((std.idealBfm - cur.bfm).toFixed(1));
+      const muscleControl = Number(Math.max(0, std.idealSmm - cur.smm).toFixed(1));
+      const weightControl = Number((std.idealWeight - cur.weight).toFixed(1));
+      const calcScore = cur.inbodyScore || Math.round(80 - Math.abs(fatControl) * 1.1 + (cur.smm >= std.idealSmm ? 4 : -2));
+
+      document.getElementById("inbodyScoreVal").textContent = Math.max(40, Math.min(100, calcScore));
+      document.getElementById("bmrVal").textContent = cur.bmr || Math.round(370 + (21.6 * (cur.weight - cur.bfm)));
+
+      document.getElementById("targetWeightVal").textContent = `${std.idealWeight} kg`;
+      document.getElementById("weightControlVal").textContent = `${weightControl > 0 ? '+' : ''}${weightControl} kg`;
+      document.getElementById("fatControlVal").textContent = `${fatControl > 0 ? '+' : ''}${fatControl} kg`;
+      document.getElementById("muscleControlVal").textContent = `+${muscleControl} kg`;
+
+      // 3 段水平 Bar
+      const wPos = Math.min(Math.max(((cur.weight / std.idealWeight - 0.55) / (1.5 - 0.55)) * 100, 5), 100);
+      const sPos = Math.min(Math.max(((cur.smm / std.idealSmm - 0.70) / (1.5 - 0.70)) * 100, 5), 100);
+      const fPos = Math.min(Math.max(((cur.bfm / std.idealBfm - 0.40) / (2.6 - 0.40)) * 100, 5), 100);
+
+      document.getElementById("barWeight").textContent = cur.weight;
+      document.getElementById("barWeight").style.width = `${wPos}%`;
+      document.getElementById("barWeightRange").textContent = `標準區間: ${std.weightMin} ~ ${std.weightMax} kg (100% = ${std.idealWeight}kg)`;
+
+      document.getElementById("barSmm").textContent = cur.smm;
+      document.getElementById("barSmm").style.width = `${sPos}%`;
+      document.getElementById("barSmmRange").textContent = `標準區間: ${std.smmMin} ~ ${std.smmMax} kg (100% = ${std.idealSmm.toFixed(1)}kg)`;
+
+      document.getElementById("barBfm").textContent = `${cur.bfm} kg`;
+      document.getElementById("barBfm").style.width = `${fPos}%`;
+      document.getElementById("barBfmRange").textContent = `標準區間: ${std.bfmMin} ~ ${std.bfmMax} kg (換算脂肪重)`;
+
+      document.getElementById("valBmi").textContent = cur.bmi;
+      document.getElementById("barBmiVal").textContent = cur.bmi;
+      document.getElementById("barBmiVal").style.width = `${Math.min(Math.max(((cur.bmi - 10) / (40 - 10)) * 100, 5), 100)}%`;
+
+      document.getElementById("valPbf").textContent = `${cur.pbf}%`;
+      document.getElementById("barPbfVal").textContent = `${cur.pbf}%`;
+      const pbfMinScale = isMale ? 5 : 8;
+      const pbfMaxScale = isMale ? 45 : 53;
+      document.getElementById("barPbfVal").style.width = `${Math.min(Math.max(((cur.pbf - pbfMinScale) / (pbfMaxScale - pbfMinScale)) * 100, 5), 100)}%`;
+      document.getElementById("pbfScaleMarks").innerHTML = isMale 
+        ? `<span>5.0</span><span>10.0 (低)</span><span class="font-bold text-slate-600">20.0 (正常)</span><span>25.0</span><span>35.0</span><span>45.0</span>`
+        : `<span>8.0</span><span>13.0</span><span class="font-bold text-slate-600">18.0 (低)</span><span class="font-bold text-slate-600">28.0 (正常)</span><span>33.0</span><span>53.0</span>`;
+
+      // 肥胖評估 Checkbox
+      const isBmiNormal = cur.bmi >= 18.5 && cur.bmi <= 24.0;
+      const isBmiUnder = cur.bmi < 18.5;
+      const isBmiSlight = cur.bmi > 24.0 && cur.bmi <= 27.0;
+      const isBmiHigh = cur.bmi > 27.0;
+
+      document.getElementById("bmiCheckboxGroup").innerHTML = `
+        <label class="flex items-center gap-1.5 ${isBmiNormal ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isBmiNormal ? 'checked' : ''} disabled class="accent-red-600"> <span>正常</span></label>
+        <label class="flex items-center gap-1.5 ${isBmiUnder ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isBmiUnder ? 'checked' : ''} disabled class="accent-red-600"> <span>不足</span></label>
+        <label class="flex items-center gap-1.5 ${isBmiSlight ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isBmiSlight ? 'checked' : ''} disabled class="accent-red-600"> <span>稍高</span></label>
+        <label class="flex items-center gap-1.5 ${isBmiHigh ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isBmiHigh ? 'checked' : ''} disabled class="accent-red-600"> <span>高</span></label>
+      `;
+
+      const pbfNormalLimit = isMale ? 20.0 : 28.0;
+      const pbfSlightLimit = isMale ? 25.0 : 32.0;
+      const isPbfNorm = cur.pbf <= pbfNormalLimit;
+      const isPbfSl = cur.pbf > pbfNormalLimit && cur.pbf <= pbfSlightLimit;
+      const isPbfHi = cur.pbf > pbfSlightLimit;
+
+      document.getElementById("pbfCheckboxGroup").innerHTML = `
+        <label class="flex items-center gap-1.5 ${isPbfNorm ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isPbfNorm ? 'checked' : ''} disabled class="accent-red-600"> <span>正常 (${isMale ? '10~20%' : '18~28%'})</span></label>
+        <label class="flex items-center gap-1.5 ${isPbfSl ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isPbfSl ? 'checked' : ''} disabled class="accent-red-600"> <span>稍高</span></label>
+        <label class="flex items-center gap-1.5 ${isPbfHi ? 'text-red-700 font-bold' : 'text-slate-400'}"><input type="checkbox" ${isPbfHi ? 'checked' : ''} disabled class="accent-red-600"> <span>高</span></label>
+      `;
+
+      document.getElementById("obesityNote").textContent = isPbfHi 
+        ? `體脂率高於標準上限，建議配合適度飲食與肌力訓練增加肌肉量。`
+        : `各項身體組成處於良好標準區間，請繼續維持健康作息。`;
+
+      // 動態更新部位別 SVG 輪廓
+      document.getElementById("leanSilhouetteSvg").innerHTML = renderSilhouette(gender, 'lean');
+      document.getElementById("fatSilhouetteSvg").innerHTML = renderSilhouette(gender, 'fat');
+
+      // 更新五部位數據 (自動由 % 換算的重量與百分比)
+      const l = cur.segmentalLean || { leftArm: { value: 0, percentage: 100 }, rightArm: { value: 0, percentage: 100 }, trunk: { value: 0, percentage: 100 }, leftLeg: { value: 0, percentage: 100 }, rightLeg: { value: 0, percentage: 100 } };
+      const f = cur.segmentalFat || { leftArm: { value: 0, percentage: 100 }, rightArm: { value: 0, percentage: 100 }, trunk: { value: 0, percentage: 100 }, leftLeg: { value: 0, percentage: 100 }, rightLeg: { value: 0, percentage: 100 } };
+
+      document.getElementById("segmentalLeanTotal").textContent = `骨骼肌總量: ${cur.smm} kg`;
+      document.getElementById("valLeanLA").textContent = `${l.leftArm.value} kg`;
+      document.getElementById("pctLeanLA").textContent = `${l.leftArm.percentage}%`;
+      document.getElementById("valLeanRA").textContent = `${l.rightArm.value} kg`;
+      document.getElementById("pctLeanRA").textContent = `${l.rightArm.percentage}%`;
+      document.getElementById("valLeanTR").textContent = `${l.trunk.value} kg`;
+      document.getElementById("pctLeanTR").textContent = `${l.trunk.percentage}%`;
+      document.getElementById("valLeanLL").textContent = `${l.leftLeg.value} kg`;
+      document.getElementById("pctLeanLL").textContent = `${l.leftLeg.percentage}%`;
+      document.getElementById("valLeanRL").textContent = `${l.rightLeg.value} kg`;
+      document.getElementById("pctLeanRL").textContent = `${l.rightLeg.percentage}%`;
+
+      document.getElementById("segmentalFatTotal").textContent = `體脂肪總量: ${cur.bfm} kg`;
+      document.getElementById("valFatLA").textContent = `${f.leftArm.value} kg`;
+      document.getElementById("pctFatLA").textContent = `${f.leftArm.percentage}%`;
+      document.getElementById("valFatRA").textContent = `${f.rightArm.value} kg`;
+      document.getElementById("pctFatRA").textContent = `${f.rightArm.percentage}%`;
+      document.getElementById("valFatTR").textContent = `${f.trunk.value} kg`;
+      document.getElementById("pctFatTR").textContent = `${f.trunk.percentage}%`;
+      document.getElementById("valFatLL").textContent = `${f.leftLeg.value} kg`;
+      document.getElementById("pctFatLL").textContent = `${f.leftLeg.percentage}%`;
+      document.getElementById("valFatRL").textContent = `${f.rightLeg.value} kg`;
+      document.getElementById("pctFatRL").textContent = `${f.rightLeg.percentage}%`;
+
+      renderHistoryTable();
+    }
+
+    function initChart() {
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    function updateChart() {
+      if (!trendChartInstance) return;
+      const userRecords = records.filter(r => r.userId === currentUserId);
+      const sorted = [...userRecords].sort((a,b) => parseDateTime(a.date, a.time) - parseDateTime(b.date, b.time));
+
+      trendChartInstance.data.labels = sorted.map(r => r.date.slice(2).replace(/-/g, '.'));
+      trendChartInstance.data.datasets = [
+        { label: '體重 (kg)', data: sorted.map(r => r.weight), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.2 },
+        { label: '骨骼肌重 (kg)', data: sorted.map(r => r.smm), borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.2 },
+        { label: '體脂率 (%)', data: sorted.map(r => r.pbf), borderColor: '#e11d48', backgroundColor: '#e11d48', tension: 0.2 }
+      ];
+      trendChartInstance.update();
+
+      if (sorted.length >= 2) {
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        document.getElementById("statWeightLoss").textContent = `${(last.weight - first.weight) > 0 ? '+' : ''}${(last.weight - first.weight).toFixed(1)} kg`;
+        document.getElementById("statPbfLoss").textContent = `${(last.pbf - first.pbf) > 0 ? '+' : ''}${(last.pbf - first.pbf).toFixed(1)}%`;
+        document.getElementById("statSmmLoss").textContent = `${((last.smm / first.smm) * 100).toFixed(1)}%`;
+      } else {
+        document.getElementById("statWeightLoss").textContent = `0.0 kg`;
+        document.getElementById("statPbfLoss").textContent = `0.0%`;
+        document.getElementById("statSmmLoss").textContent = `100%`;
+      }
+    }
+
+    // 分頁切換 (第一頁: 基礎組成 / 第二頁: 四肢部位分析)
+    function switchHistoryTab(tabIndex) {
+      activeHistoryTab = tabIndex;
+      const btn1 = document.getElementById("btnTabHistoryPage1");
+      const btn2 = document.getElementById("btnTabHistoryPage2");
+
+      if (tabIndex === 1) {
+        btn1.className = "px-3 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all";
+        btn2.className = "px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all";
+      } else {
+        btn2.className = "px-3 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all";
+        btn1.className = "px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all";
+      }
+
+      renderHistoryTable();
+    }
+
+    // 渲染歷史表格 (第一頁 / 第二頁)
+    function renderHistoryTable() {
+      const table = document.getElementById("historyTable");
+      const user = users.find(u => u.id === currentUserId);
+      const userRecords = records.filter(r => r.userId === currentUserId);
+      const sorted = [...userRecords].sort((a,b) => parseDateTime(a.date, a.time) - parseDateTime(b.date, b.time));
+
+      if (sorted.length === 0) {
+        table.innerHTML = `
+          <tbody>
+            <tr>
+              <td class="p-8 text-center text-slate-400">
+                <div class="font-bold text-slate-700 mb-1">【${user ? user.name : '此受測者'}】目前尚無歷史檢測紀錄</div>
+                <div class="text-xs text-slate-400 mb-3">請點擊上方「新增檢測」為此受測者建立第一筆數據。</div>
+                <button onclick="document.getElementById('btnNewRecord').click()" class="px-4 py-2 bg-red-700 text-white rounded-lg text-xs font-bold hover:bg-red-800 shadow-sm">
+                  ＋ 新增第一筆檢測
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        `;
+        return;
+      }
+
+      let thead = `<thead><tr class="bg-slate-100 border-b border-slate-200 font-bold text-slate-700">
+        <th class="py-2.5 px-3 text-left w-32 bg-slate-200 sticky left-0 z-10">
+          ${activeHistoryTab === 1 ? '基礎指標項目' : '四肢部位指標'}
+        </th>`;
+      
+      sorted.forEach(r => {
+        const isSel = r.id === currentId;
+        thead += `
+          <th class="py-2 px-2 cursor-pointer transition-colors ${isSel ? 'bg-red-50 text-red-700 font-extrabold' : 'hover:bg-slate-200/50'}" onclick="selectRec('${r.id}')">
+            <div>${r.date.slice(2).replace(/-/g, '.')}</div>
+            <div class="text-[10px] font-normal text-slate-400">${r.time}</div>
+          </th>
+        `;
+      });
+      thead += `</tr></thead>`;
+
+      let tbody = `<tbody class="divide-y divide-slate-200 bg-white">`;
+
+      if (activeHistoryTab === 1) {
+        // 第一頁：體重、骨骼肌重、體脂率、換算體脂肪重、BMI、內臟脂肪等級
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10">體重 (kg)</td>`;
+        sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold text-slate-900' : ''}">${r.weight}</td>`; });
+        tbody += `</tr>`;
+
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10">骨骼肌重 (kg)</td>`;
+        sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold text-indigo-700' : ''}">${r.smm}</td>`; });
+        tbody += `</tr>`;
+
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10">體脂率 (%)</td>`;
+        sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold text-rose-600' : ''}">${r.pbf}%</td>`; });
+        tbody += `</tr>`;
+
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10 text-rose-700">換算脂肪重 (kg)</td>`;
+        sorted.forEach(r => { tbody += `<td class="py-2 px-2 font-semibold ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${r.bfm}</td>`; });
+        tbody += `</tr>`;
+
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10 text-slate-600">BMI</td>`;
+        sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${r.bmi}</td>`; });
+        tbody += `</tr>`;
+
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10 text-amber-700">內臟脂肪等級</td>`;
+        sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">Lv ${r.visceralFatLevel}</td>`; });
+        tbody += `</tr>`;
+      } else {
+        // 第二頁：四肢與軀幹肌肉量 (kg 與 %) 及 四肢皮下脂肪量 (kg 與 %)
+        // 肌肉列
+        const renderLeanRow = (name, key) => {
+          tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-indigo-50/50 sticky left-0 z-10 text-indigo-900">${name}肌肉 (kg / %)</td>`;
+          sorted.forEach(r => {
+            const data = r.segmentalLean?.[key] || { value: '-', percentage: '-' };
+            tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${data.value} kg <span class="text-[10px] text-slate-400">(${data.percentage}%)</span></td>`;
+          });
+          tbody += `</tr>`;
+        };
+
+        renderLeanRow('左臂', 'leftArm');
+        renderLeanRow('右臂', 'rightArm');
+        renderLeanRow('軀幹', 'trunk');
+        renderLeanRow('左腿', 'leftLeg');
+        renderLeanRow('右腿', 'rightLeg');
+
+        // 脂肪列
+        const renderFatRow = (name, key) => {
+          tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-rose-50/50 sticky left-0 z-10 text-rose-900">${name}皮下脂肪 (kg / %)</td>`;
+          sorted.forEach(r => {
+            const data = r.segmentalFat?.[key] || { value: '-', percentage: '-' };
+            tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${data.value} kg <span class="text-[10px] text-slate-400">(${data.percentage}%)</span></td>`;
+          });
+          tbody += `</tr>`;
+        };
+
+        renderFatRow('左臂', 'leftArm');
+        renderFatRow('右臂', 'rightArm');
+        renderFatRow('軀幹', 'trunk');
+        renderFatRow('左腿', 'leftLeg');
+        renderFatRow('右腿', 'rightLeg');
+      }
+
+      tbody += `</tbody>`;
+      table.innerHTML = thead + tbody;
+    }
+
+    function selectRec(id) {
+      currentId = id;
+      document.getElementById("recordSelect").value = id;
+      renderCurrent();
+    }
+
+    // 歷史紀錄中的「修改」按鈕
+    function editSelectedHistoryRecord() {
+      const userRecords = records.filter(r => r.userId === currentUserId);
+      const cur = userRecords.find(r => r.id === currentId) || userRecords[0];
+      if (!cur) {
+        alert("目前尚無可編輯的檢測紀錄，請先新增檢測。");
+        return;
+      }
+      openDataModalForEdit(cur);
+    }
+
+    // 表單輸入即時換算：體脂率% -> 體脂肪重量kg
+    function calculateBfmOnInput() {
+      const w = parseFloat(document.getElementById("fWeight").value) || 0;
+      const p = parseFloat(document.getElementById("fPbf").value) || 0;
+      const bfm = Number(((w * p) / 100).toFixed(1));
+      document.getElementById("fCalcBfmVal").textContent = bfm;
+      calculateSegmentalOnInput();
+    }
+
+    // 表單輸入即時換算：四肢肌肉%與皮下脂肪% -> 換算各部位kg
+    function calculateSegmentalOnInput() {
+      const h = parseFloat(document.getElementById("fHeight").value) || 160;
+      const gender = document.getElementById("fGender").value;
+      const std = getLimbStandards(h, gender);
+
+      // 肌肉換算
+      const lLA = parseFloat(document.getElementById("fLeanPctLA").value) || 100;
+      const lRA = parseFloat(document.getElementById("fLeanPctRA").value) || 100;
+      const lTR = parseFloat(document.getElementById("fLeanPctTR").value) || 100;
+      const lLL = parseFloat(document.getElementById("fLeanPctLL").value) || 100;
+      const lRL = parseFloat(document.getElementById("fLeanPctRL").value) || 100;
+
+      document.getElementById("calcLeanKgLA").textContent = Number((std.lean.la * (lLA / 100)).toFixed(2));
+      document.getElementById("calcLeanKgRA").textContent = Number((std.lean.ra * (lRA / 100)).toFixed(2));
+      document.getElementById("calcLeanKgTR").textContent = Number((std.lean.tr * (lTR / 100)).toFixed(1));
+      document.getElementById("calcLeanKgLL").textContent = Number((std.lean.ll * (lLL / 100)).toFixed(2));
+      document.getElementById("calcLeanKgRL").textContent = Number((std.lean.rl * (lRL / 100)).toFixed(2));
+
+      // 皮下脂肪換算
+      const fLA = parseFloat(document.getElementById("fFatPctLA").value) || 100;
+      const fRA = parseFloat(document.getElementById("fFatPctRA").value) || 100;
+      const fTR = parseFloat(document.getElementById("fFatPctTR").value) || 100;
+      const fLL = parseFloat(document.getElementById("fFatPctLL").value) || 100;
+      const fRL = parseFloat(document.getElementById("fFatPctRL").value) || 100;
+
+      document.getElementById("calcFatKgLA").textContent = Number((std.fat.la * (fLA / 100)).toFixed(2));
+      document.getElementById("calcFatKgRA").textContent = Number((std.fat.ra * (fRA / 100)).toFixed(2));
+      document.getElementById("calcFatKgTR").textContent = Number((std.fat.tr * (fTR / 100)).toFixed(1));
+      document.getElementById("calcFatKgLL").textContent = Number((std.fat.ll * (fLL / 100)).toFixed(2));
+      document.getElementById("calcFatKgRL").textContent = Number((std.fat.rl * (fRL / 100)).toFixed(2));
+    }
+
+    function openDataModalForEdit(cur) {
+      editingId = cur.id;
+      document.getElementById("dataModalTitle").textContent = `編輯檢測紀錄 (${cur.date} ${cur.time})`;
+      document.getElementById("fDate").value = cur.date;
+      document.getElementById("fTime").value = cur.time;
+      document.getElementById("fGender").value = cur.gender || 'female';
+      document.getElementById("fHeight").value = cur.height;
+      document.getElementById("fAge").value = cur.age;
+      document.getElementById("fWeight").value = cur.weight;
+      document.getElementById("fSmm").value = cur.smm;
+      document.getElementById("fPbf").value = cur.pbf;
+      document.getElementById("fVisceral").value = cur.visceralFatLevel;
+
+      const l = cur.segmentalLean || { leftArm: { percentage: 100 }, rightArm: { percentage: 100 }, trunk: { percentage: 100 }, leftLeg: { percentage: 100 }, rightLeg: { percentage: 100 } };
+      const f = cur.segmentalFat || { leftArm: { percentage: 100 }, rightArm: { percentage: 100 }, trunk: { percentage: 100 }, leftLeg: { percentage: 100 }, rightLeg: { percentage: 100 } };
+
+      document.getElementById("fLeanPctLA").value = l.leftArm?.percentage || 100;
+      document.getElementById("fLeanPctRA").value = l.rightArm?.percentage || 100;
+      document.getElementById("fLeanPctTR").value = l.trunk?.percentage || 100;
+      document.getElementById("fLeanPctLL").value = l.leftLeg?.percentage || 100;
+      document.getElementById("fLeanPctRL").value = l.rightLeg?.percentage || 100;
+
+      document.getElementById("fFatPctLA").value = f.leftArm?.percentage || 100;
+      document.getElementById("fFatPctRA").value = f.rightArm?.percentage || 100;
+      document.getElementById("fFatPctTR").value = f.trunk?.percentage || 100;
+      document.getElementById("fFatPctLL").value = f.leftLeg?.percentage || 100;
+      document.getElementById("fFatPctRL").value = f.rightLeg?.percentage || 100;
+
+      calculateBfmOnInput();
+      document.getElementById("dataModal").classList.remove("hidden");
+    }
+
+    function closeDataModal() { document.getElementById("dataModal").classList.add("hidden"); }
+    function closeBackupModal() { document.getElementById("backupModal").classList.add("hidden"); }
+    function closeManageUsersModal() { document.getElementById("manageUsersModal").classList.add("hidden"); }
+    
+    // 📱 iPhone 隨身版教學 Modal
+    function openIosGuideModal() {
+      const hostEl = document.getElementById("iosHostUrl");
+      if (hostEl) {
+        if (window.location.protocol.startsWith("http")) {
+          hostEl.textContent = window.location.href;
+        } else {
+          hostEl.textContent = "http://192.168.0.100:8080/standalone-app.html";
+        }
+      }
+      document.getElementById("iosGuideModal").classList.remove("hidden");
+    }
+    function closeIosGuideModal() {
+      document.getElementById("iosGuideModal").classList.add("hidden");
+    }
+
+    // 註冊 PWA Service Worker (若在 http/https 下運行)
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.'))) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(
+          reg => console.log('PWA ServiceWorker 註冊成功:', reg.scope),
+          err => console.log('PWA ServiceWorker 略過:', err)
+        );
+      });
+    }
+
+    // 🌟 使用者管理 Modal (CRUD)
+    function openManageUsersModal(mode = 'list') {
+      renderUserListInModal();
+      resetUserForm();
+      document.getElementById("manageUsersModal").classList.remove("hidden");
+    }
+
+    function renderUserListInModal() {
+      const list = document.getElementById("userListContainer");
+      list.innerHTML = "";
+
+      if (users.length === 0) {
+        list.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">目前無任何使用者，請使用下方表單新增</div>`;
+        return;
+      }
+
+      users.forEach(u => {
+        const count = records.filter(r => r.userId === u.id).length;
+        const isCur = u.id === currentUserId;
+        const div = document.createElement("div");
+        div.className = `p-3 flex items-center justify-between text-xs ${isCur ? 'bg-red-50/40' : 'hover:bg-slate-50'}`;
+        div.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-800 text-sm">${u.name}</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ${u.gender === 'male' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+              ${u.gender === 'male' ? '♂ 男性' : '♀ 女性'}
+            </span>
+            <span class="text-slate-400">| ${u.height}cm, ${u.age}歲</span>
+            <span class="text-slate-500 font-semibold ml-2">(${count} 筆紀錄)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="startEditUser('${u.id}')" class="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md border border-blue-200">
+              修改
+            </button>
+            <button onclick="deleteUser('${u.id}')" class="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-md border border-rose-200">
+              刪除
+            </button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function startEditUser(userId) {
+      const u = users.find(x => x.id === userId);
+      if (!u) return;
+
+      document.getElementById("editingUserId").value = u.id;
+      document.getElementById("userFormTitle").textContent = `修改使用者：${u.name}`;
+      document.getElementById("btnCancelEditUser").classList.remove("hidden");
+      document.getElementById("btnSaveUser").textContent = "確認修改使用者";
+
+      document.getElementById("mName").value = u.name;
+      document.getElementById("mHeight").value = u.height;
+      document.getElementById("mAge").value = u.age;
+
+      if (u.gender === 'male') {
+        document.getElementById("mRadioMale").checked = true;
+        document.getElementById("mRadioMale").dispatchEvent(new Event('change'));
+      } else {
+        document.getElementById("mRadioFemale").checked = true;
+        document.getElementById("mRadioFemale").dispatchEvent(new Event('change'));
+      }
+    }
+
+    function resetUserForm() {
+      document.getElementById("editingUserId").value = "";
+      document.getElementById("userFormTitle").textContent = "新增受測者";
+      document.getElementById("btnCancelEditUser").classList.add("hidden");
+      document.getElementById("btnSaveUser").textContent = "儲存使用者資料";
+      document.getElementById("mName").value = "";
+      document.getElementById("mHeight").value = "165.0";
+      document.getElementById("mAge").value = "30";
+      document.getElementById("mRadioFemale").checked = true;
+      document.getElementById("mRadioFemale").dispatchEvent(new Event('change'));
+    }
+
+    function deleteUser(userId) {
+      const u = users.find(x => x.id === userId);
+      if (!confirm(`確定要刪除使用者「${u?.name}」及其所有檢測紀錄嗎？`)) return;
+
+      users = users.filter(x => x.id !== userId);
+      records = records.filter(r => r.userId !== userId);
+      saveState();
+
+      if (currentUserId === userId) {
+        currentUserId = users.length > 0 ? users[0].id : "";
+      }
+
+      renderUserSelect();
+      renderUserListInModal();
+      if (currentUserId) {
+        switchUser(currentUserId);
+      } else {
+        showEmptyState();
+      }
+    }
+
+    function bindEvents() {
+      // 點擊「修改使用者」按鈕
+      document.getElementById("btnManageUsers").onclick = () => {
+        openManageUsersModal();
+      };
+
+      // 性別按鈕樣式連動
+      document.getElementById("mRadioMale").onchange = () => {
+        document.getElementById("mLabelMale").className = "cursor-pointer border-2 border-blue-500 bg-blue-50/50 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold";
+        document.getElementById("mLabelFemale").className = "cursor-pointer border-2 border-slate-200 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold";
+      };
+      document.getElementById("mRadioFemale").onchange = () => {
+        document.getElementById("mLabelFemale").className = "cursor-pointer border-2 border-red-500 bg-red-50/50 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold";
+        document.getElementById("mLabelMale").className = "cursor-pointer border-2 border-slate-200 rounded-xl p-2.5 flex items-center gap-2 text-xs font-bold";
+      };
+
+      // 提交使用者表單 (新增 / 修改)
+      document.getElementById("userForm").onsubmit = (e) => {
+        e.preventDefault();
+        const editId = document.getElementById("editingUserId").value;
+        const name = document.getElementById("mName").value.trim();
+        const gender = document.querySelector('input[name="mGender"]:checked').value;
+        const height = parseFloat(document.getElementById("mHeight").value);
+        const age = parseInt(document.getElementById("mAge").value);
+
+        if (editId) {
+          // 修改現有使用者
+          const idx = users.findIndex(u => u.id === editId);
+          if (idx >= 0) {
+            users[idx] = { ...users[idx], name, gender, height, age };
+          }
+        } else {
+          // 新增使用者
+          const newUserId = `usr-${Date.now()}`;
+          users.push({ id: newUserId, name, gender, height, age });
+          currentUserId = newUserId;
+        }
+
+        saveState();
+        renderUserSelect();
+        renderUserListInModal();
+        resetUserForm();
+        switchUser(currentUserId);
+        closeManageUsersModal();
+      };
+
+      // 使用者下拉選單切換
+      document.getElementById("userSelect").onchange = (e) => {
+        switchUser(e.target.value);
+      };
+
+      // 檢測紀錄下拉選單切換
+      document.getElementById("recordSelect").onchange = (e) => {
+        currentId = e.target.value;
+        renderCurrent();
+      };
+
+      // 點擊「編輯此筆數據」
+      document.getElementById("btnEditCurrent").onclick = () => {
+        const userRecords = records.filter(r => r.userId === currentUserId);
+        const cur = userRecords.find(r => r.id === currentId) || userRecords[0];
+        if (!cur) return;
+        openDataModalForEdit(cur);
+      };
+
+      // 點擊「新增檢測」
+      document.getElementById("btnNewRecord").onclick = () => {
+        if (!currentUserId || users.length === 0) {
+          alert("請先建立使用者！");
+          openManageUsersModal('add');
+          return;
+        }
+
+        editingId = null;
+        const user = users.find(u => u.id === currentUserId);
+        document.getElementById("dataModalTitle").textContent = `新增檢測紀錄 (${user.name})`;
+        const now = new Date();
+        document.getElementById("fDate").value = now.toISOString().slice(0,10);
+        document.getElementById("fTime").value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        document.getElementById("fGender").value = user.gender;
+        document.getElementById("fHeight").value = user.height;
+        document.getElementById("fAge").value = user.age;
+
+        const std = getDynamicStandards(user.height, user.gender);
+        document.getElementById("fWeight").value = std.idealWeight;
+        document.getElementById("fSmm").value = Number(std.idealSmm.toFixed(1));
+        document.getElementById("fPbf").value = user.gender === 'male' ? 15.0 : 22.0;
+        document.getElementById("fVisceral").value = 5;
+
+        // 重置四肢百分比預設為 100%
+        ['LA','RA','TR','LL','RL'].forEach(k => {
+          document.getElementById(`fLeanPct${k}`).value = 100.0;
+          document.getElementById(`fFatPct${k}`).value = 100.0;
+        });
+
+        calculateBfmOnInput();
+        document.getElementById("dataModal").classList.remove("hidden");
+      };
+
+      // 點擊「刪除紀錄」
+      document.getElementById("btnDeleteCurrent").onclick = () => {
+        const userRecords = records.filter(r => r.userId === currentUserId);
+        if (userRecords.length === 0) return;
+        if (!confirm("確定要刪除這筆檢測數據嗎？")) return;
+
+        records = records.filter(r => r.id !== currentId);
+        saveState();
+        switchUser(currentUserId);
+      };
+
+      // 備份
+      document.getElementById("btnBackup").onclick = () => {
+        document.getElementById("backupModal").classList.remove("hidden");
+      };
+
+      // 提交檢測資料儲存 (自動將 % 數換算為實際 kg 儲存)
+      document.getElementById("recordForm").onsubmit = (e) => {
+        e.preventDefault();
+        const user = users.find(u => u.id === currentUserId);
+        if (!user) return;
+
+        const date = document.getElementById("fDate").value;
+        const time = document.getElementById("fTime").value;
+        const gender = document.getElementById("fGender").value;
+        const weight = parseFloat(document.getElementById("fWeight").value);
+        const smm = parseFloat(document.getElementById("fSmm").value);
+        const pbf = parseFloat(document.getElementById("fPbf").value);
+        const height = parseFloat(document.getElementById("fHeight").value);
+        const age = parseInt(document.getElementById("fAge").value);
+        const visceral = parseInt(document.getElementById("fVisceral").value);
+
+        // 自動換算 BMI 與 脂肪重量 (kg)
+        const bmi = Number((weight / ((height/100)*(height/100))).toFixed(1));
+        const bfm = Number(((weight * pbf) / 100).toFixed(1));
+
+        // 換算四肢與軀幹肌肉量 kg
+        const limbStd = getLimbStandards(height, gender);
+        const lLA_pct = parseFloat(document.getElementById("fLeanPctLA").value);
+        const lRA_pct = parseFloat(document.getElementById("fLeanPctRA").value);
+        const lTR_pct = parseFloat(document.getElementById("fLeanPctTR").value);
+        const lLL_pct = parseFloat(document.getElementById("fLeanPctLL").value);
+        const lRL_pct = parseFloat(document.getElementById("fLeanPctRL").value);
+
+        const segmentalLean = {
+          leftArm: { value: Number((limbStd.lean.la * (lLA_pct / 100)).toFixed(2)), percentage: lLA_pct, status: "normal" },
+          rightArm: { value: Number((limbStd.lean.ra * (lRA_pct / 100)).toFixed(2)), percentage: lRA_pct, status: "normal" },
+          trunk: { value: Number((limbStd.lean.tr * (lTR_pct / 100)).toFixed(1)), percentage: lTR_pct, status: "normal" },
+          leftLeg: { value: Number((limbStd.lean.ll * (lLL_pct / 100)).toFixed(2)), percentage: lLL_pct, status: "normal" },
+          rightLeg: { value: Number((limbStd.lean.rl * (lRL_pct / 100)).toFixed(2)), percentage: lRL_pct, status: "normal" }
+        };
+
+        // 換算四肢與軀幹皮下脂肪量 kg
+        const fLA_pct = parseFloat(document.getElementById("fFatPctLA").value);
+        const fRA_pct = parseFloat(document.getElementById("fFatPctRA").value);
+        const fTR_pct = parseFloat(document.getElementById("fFatPctTR").value);
+        const fLL_pct = parseFloat(document.getElementById("fFatPctLL").value);
+        const fRL_pct = parseFloat(document.getElementById("fFatPctRL").value);
+
+        const segmentalFat = {
+          leftArm: { value: Number((limbStd.fat.la * (fLA_pct / 100)).toFixed(2)), percentage: fLA_pct, status: "normal" },
+          rightArm: { value: Number((limbStd.fat.ra * (fRA_pct / 100)).toFixed(2)), percentage: fRA_pct, status: "normal" },
+          trunk: { value: Number((limbStd.fat.tr * (fTR_pct / 100)).toFixed(1)), percentage: fTR_pct, status: "normal" },
+          leftLeg: { value: Number((limbStd.fat.ll * (fLL_pct / 100)).toFixed(2)), percentage: fLL_pct, status: "normal" },
+          rightLeg: { value: Number((limbStd.fat.rl * (fRL_pct / 100)).toFixed(2)), percentage: fRL_pct, status: "normal" }
+        };
+
+        if (editingId) {
+          const idx = records.findIndex(r => r.id === editingId);
+          if (idx >= 0) {
+            records[idx] = {
+              ...records[idx],
+              date, time, gender, weight, smm, pbf, height, age, bmi, bfm,
+              visceralFatLevel: visceral,
+              segmentalLean, segmentalFat
+            };
+            currentId = editingId;
+          }
+        } else {
+          const newRec = {
+            id: `rec-${date.replace(/-/g,'')}-${time.replace(/:/g,'')}-${Date.now().toString().slice(-4)}`,
+            userId: currentUserId,
+            date, time, name: user.name, gender, age, height,
+            weight, smm, pbf, bmi, bfm,
+            visceralFatLevel: visceral,
+            segmentalLean, segmentalFat
+          };
+          records.unshift(newRec);
+          currentId = newRec.id;
+        }
+
+        saveState();
+        closeDataModal();
+        switchUser(currentUserId);
+      };
+    }
+
+    function exportJSON() {
+      const data = { users, records };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+      const a = document.createElement("a");
+      a.href = dataStr;
+      a.download = `inbody_data_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    function exportCSV() {
+      const header = ["ID,使用者ID,日期,時間,姓名,性別,身高,年齡,體重,骨骼肌重,體脂率,換算脂肪重,BMI,內臟脂肪等級,左臂肌kg,右臂肌kg,軀幹肌kg,左腿肌kg,右腿肌kg,左臂脂kg,右臂脂kg,軀幹脂kg,左腿脂kg,右腿脂kg"];
+      const rows = records.map(r => {
+        const l = r.segmentalLean || {};
+        const f = r.segmentalFat || {};
+        return `${r.id},${r.userId || ''},${r.date},${r.time},${r.name},${r.gender === 'male' ? '男' : '女'},${r.height},${r.age},${r.weight},${r.smm},${r.pbf},${r.bfm},${r.bmi},${r.visceralFatLevel},${l.leftArm?.value || ''},${l.rightArm?.value || ''},${l.trunk?.value || ''},${l.leftLeg?.value || ''},${l.rightLeg?.value || ''},${f.leftArm?.value || ''},${f.rightArm?.value || ''},${f.trunk?.value || ''},${f.leftLeg?.value || ''},${f.rightLeg?.value || ''}`;
+      });
+      const csv = "\uFEFF" + [header, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `inbody_records_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    document.getElementById("importFileInput").onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed.users && parsed.records) {
+            users = parsed.users;
+            records = parsed.records;
+          } else if (Array.isArray(parsed)) {
+            records = parsed;
+          }
+          currentUserId = users[0]?.id || "";
+          saveState();
+          renderUserSelect();
+          if (currentUserId) switchUser(currentUserId);
+          alert("成功匯入備份資料！");
+          closeBackupModal();
+        } catch(err) {
+          alert("匯入失敗：請上傳合法的 JSON 檔案");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    function clearAllData() {
+      if (confirm("確定要清空所有資料嗎？這將刪除本機所有使用者與紀錄。")) {
+        localStorage.removeItem("inbody_custom_users_v3");
+        localStorage.removeItem("inbody_custom_records_v3");
+        localStorage.removeItem("inbody_users_list_v2");
+        localStorage.removeItem("inbody_records_list_v2");
+        localStorage.removeItem("inbody_standalone_records");
+        users = [];
+        records = [];
+        currentUserId = "";
+        currentId = "";
+        saveState();
+        renderUserSelect();
+        showEmptyState();
+        closeBackupModal();
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
