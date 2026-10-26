@@ -409,115 +409,162 @@
         </div>
       </div>
 
-      <!-- 3. 部位別分析 (雙人體圖示 - 透明無白底排版) -->
+      <!-- 3. 局部部位分析 (雙臂 · 軀幹 · 雙腳) -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
-            <h2 class="text-base font-bold text-slate-900">部位別分析 (四肢肌肉量與皮下脂肪量)</h2>
+            <h2 class="text-base font-bold text-slate-900">局部部位分析 (雙臂 · 軀幹 · 雙腳)</h2>
           </div>
-          <span class="text-xs text-slate-500">透明無背景圖文排版</span>
+          <span class="text-xs text-slate-500 font-medium">比率以部位自重為分母 · 相對指數 (體重 × %) 供長程追蹤</span>
         </div>
 
-        <div class="p-6 grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <!-- 肌肉分析 -->
-          <div class="bg-slate-50/70 rounded-xl p-5 border border-slate-200 relative">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
-              <span class="text-sm font-bold text-slate-800">部位別肌肉分析 (四肢肌肉)</span>
-              <span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-bold border border-indigo-200" id="segmentalLeanTotal">骨骼肌: - kg</span>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- 雙臂卡片 -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+                <div class="flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                  <i data-lucide="biceps" class="w-4 h-4 text-indigo-600"></i>
+                  <span>雙臂部位 (Arms)</span>
+                </div>
+                <span class="text-[11px] text-slate-400">雙手肌群與脂肪</span>
+              </div>
+              <div class="space-y-3">
+                <!-- 骨骼肌率 -->
+                <div class="bg-white rounded-lg p-3 border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="font-bold text-indigo-950 flex items-center gap-1">
+                      <i data-lucide="dumbbell" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      骨骼肌率
+                    </span>
+                    <span id="badgeMuscleArms" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>
+                  </div>
+                  <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-2xl font-black text-indigo-950" id="valMuscleArms">-<span class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                    <div class="text-right">
+                      <span class="text-[10px] text-slate-400 block">相對肌力指數</span>
+                      <span class="text-xs font-bold text-slate-700" id="idxMuscleArms">-</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 皮下脂肪率 -->
+                <div class="bg-white rounded-lg p-3 border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="font-bold text-rose-950 flex items-center gap-1">
+                      <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-600"></i>
+                      皮下脂肪率
+                    </span>
+                    <span id="badgeFatArms" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>
+                  </div>
+                  <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-2xl font-black text-rose-950" id="valFatArms">-<span class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                    <div class="text-right">
+                      <span class="text-[10px] text-slate-400 block">相對脂肪指數</span>
+                      <span class="text-xs font-bold text-slate-700" id="idxFatArms">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="relative h-[340px] flex items-center justify-center">
-              <div id="leanSilhouetteSvg"></div>
 
-              <!-- 數據：純文字無白色背景 -->
-              <div class="absolute top-8 left-2 text-center min-w-[95px] select-none" id="leanLA">
-                <div class="text-[11px] font-bold text-slate-500">左臂 (Left)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanLA">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctLeanLA">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800" id="badgeLeanLA">正常</span>
+            <!-- 軀幹卡片 -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+                <div class="flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                  <i data-lucide="shield" class="w-4 h-4 text-indigo-600"></i>
+                  <span>軀幹部位 (Trunk)</span>
+                </div>
+                <span class="text-[11px] text-slate-400">胸腹背核心區域</span>
               </div>
-
-              <div class="absolute top-8 right-2 text-center min-w-[95px] select-none" id="leanRA">
-                <div class="text-[11px] font-bold text-slate-500">右臂 (Right)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanRA">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctLeanRA">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800" id="badgeLeanRA">正常</span>
-              </div>
-
-              <div class="absolute top-24 left-1/2 -translate-x-1/2 text-center min-w-[95px] select-none z-10" id="leanTR">
-                <div class="text-[11px] font-bold text-slate-600">軀幹 (Trunk)</div>
-                <div class="text-base font-extrabold text-slate-950 leading-tight" id="valLeanTR">- kg</div>
-                <div class="text-xs font-semibold text-slate-700" id="pctLeanTR">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800" id="badgeLeanTR">正常</span>
-              </div>
-
-              <div class="absolute bottom-3 left-2 text-center min-w-[95px] select-none" id="leanLL">
-                <div class="text-[11px] font-bold text-slate-500">左腿 (Left)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanLL">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctLeanLL">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeLeanLL">正常</span>
-              </div>
-
-              <div class="absolute bottom-3 right-2 text-center min-w-[95px] select-none" id="leanRL">
-                <div class="text-[11px] font-bold text-slate-500">右腿 (Right)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valLeanRL">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctLeanRL">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeLeanRL">正常</span>
+              <div class="space-y-3">
+                <!-- 骨骼肌率 -->
+                <div class="bg-white rounded-lg p-3 border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="font-bold text-indigo-950 flex items-center gap-1">
+                      <i data-lucide="dumbbell" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      骨骼肌率
+                    </span>
+                    <span id="badgeMuscleTrunk" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>
+                  </div>
+                  <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-2xl font-black text-indigo-950" id="valMuscleTrunk">-<span class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                    <div class="text-right">
+                      <span class="text-[10px] text-slate-400 block">相對肌力指數</span>
+                      <span class="text-xs font-bold text-slate-700" id="idxMuscleTrunk">-</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 皮下脂肪率 -->
+                <div class="bg-white rounded-lg p-3 border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="font-bold text-rose-950 flex items-center gap-1">
+                      <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-600"></i>
+                      皮下脂肪率
+                    </span>
+                    <span id="badgeFatTrunk" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>
+                  </div>
+                  <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-2xl font-black text-rose-950" id="valFatTrunk">-<span class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                    <div class="text-right">
+                      <span class="text-[10px] text-slate-400 block">相對脂肪指數</span>
+                      <span class="text-xs font-bold text-slate-700" id="idxFatTrunk">-</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500 flex justify-between" id="leanFooterNote">
-              <span>四肢與軀幹肌肉量分析</span>
-              <span class="text-indigo-700 font-semibold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">已自動由 % 換算實際重量</span>
+
+            <!-- 雙腳卡片 -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+                <div class="flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                  <i data-lucide="footprints" class="w-4 h-4 text-indigo-600"></i>
+                  <span>雙腳部位 (Legs)</span>
+                </div>
+                <span class="text-[11px] text-slate-400">大腿小腿下肢肌群</span>
+              </div>
+              <div class="space-y-3">
+                <!-- 骨骼肌率 -->
+                <div class="bg-white rounded-lg p-3 border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="font-bold text-indigo-950 flex items-center gap-1">
+                      <i data-lucide="dumbbell" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      骨骼肌率
+                    </span>
+                    <span id="badgeMuscleLegs" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>
+                  </div>
+                  <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-2xl font-black text-indigo-950" id="valMuscleLegs">-<span class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                    <div class="text-right">
+                      <span class="text-[10px] text-slate-400 block">相對肌力指數</span>
+                      <span class="text-xs font-bold text-slate-700" id="idxMuscleLegs">-</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 皮下脂肪率 -->
+                <div class="bg-white rounded-lg p-3 border border-slate-200/80 shadow-xs">
+                  <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="font-bold text-rose-950 flex items-center gap-1">
+                      <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-600"></i>
+                      皮下脂肪率
+                    </span>
+                    <span id="badgeFatLegs" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>
+                  </div>
+                  <div class="flex items-baseline justify-between mt-1">
+                    <span class="text-2xl font-black text-rose-950" id="valFatLegs">-<span class="text-xs font-normal text-slate-500 ml-0.5">%</span></span>
+                    <div class="text-right">
+                      <span class="text-[10px] text-slate-400 block">相對脂肪指數</span>
+                      <span class="text-xs font-bold text-slate-700" id="idxFatLegs">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
-
-          <!-- 脂肪分析 -->
-          <div class="bg-slate-50/70 rounded-xl p-5 border border-slate-200 relative">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
-              <span class="text-sm font-bold text-slate-800">部位別脂肪分析 (四肢皮下脂肪)</span>
-              <span class="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded font-bold border border-rose-200" id="segmentalFatTotal">體脂肪: - kg</span>
-            </div>
-            <div class="relative h-[340px] flex items-center justify-center">
-              <div id="fatSilhouetteSvg"></div>
-
-              <!-- 數據：純文字無白色背景 -->
-              <div class="absolute top-8 left-2 text-center min-w-[95px] select-none" id="fatLA">
-                <div class="text-[11px] font-bold text-slate-500">左臂 (Left)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatLA">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctFatLA">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-800" id="badgeFatLA">正常</span>
-              </div>
-
-              <div class="absolute top-8 right-2 text-center min-w-[95px] select-none" id="fatRA">
-                <div class="text-[11px] font-bold text-slate-500">右臂 (Right)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatRA">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctFatRA">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-800" id="badgeFatRA">正常</span>
-              </div>
-
-              <div class="absolute top-24 left-1/2 -translate-x-1/2 text-center min-w-[95px] select-none z-10" id="fatTR">
-                <div class="text-[11px] font-bold text-slate-600">軀幹 (Trunk)</div>
-                <div class="text-base font-extrabold text-slate-950 leading-tight" id="valFatTR">- kg</div>
-                <div class="text-xs font-semibold text-slate-700" id="pctFatTR">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100/90 text-rose-800" id="badgeFatTR">正常</span>
-              </div>
-
-              <div class="absolute bottom-3 left-2 text-center min-w-[95px] select-none" id="fatLL">
-                <div class="text-[11px] font-bold text-slate-500">左腿 (Left)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatLL">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctFatLL">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeFatLL">正常</span>
-              </div>
-
-              <div class="absolute bottom-3 right-2 text-center min-w-[95px] select-none" id="fatRL">
-                <div class="text-[11px] font-bold text-slate-500">右腿 (Right)</div>
-                <div class="text-base font-extrabold text-slate-900 leading-tight" id="valFatRL">- kg</div>
-                <div class="text-xs font-semibold text-slate-600" id="pctFatRL">-%</div>
-                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100/90 text-amber-800" id="badgeFatRL">正常</span>
-              </div>
-            </div>
-            <div class="mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500 flex justify-between" id="fatFooterNote">
-              <span>四肢皮下脂肪量分析</span>
+        </div>
+      </div>
               <span class="text-rose-700 font-semibold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">已自動由 % 換算實際重量</span>
             </div>
           </div>
@@ -722,76 +769,58 @@
           </div>
         </div>
 
-        <!-- 3. 四肢肌肉量 (輸入%數 -> 自動換算實際重量kg) -->
+        <!-- 3. 部位骨骼肌率 (輸入 雙臂 / 軀幹 / 雙腳 % 數) -->
         <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-2">
           <div class="flex items-center justify-between">
-            <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider">
-              四肢與軀幹肌肉量 (輸入達成率 % 數)
+            <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="dumbbell" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>部位骨骼肌率 (輸入雙臂 · 軀幹 · 雙腳 %)</span>
             </h4>
-            <span class="text-[11px] text-indigo-700 font-medium">系統依標準肌肉分配自動換算重量 (kg)</span>
+            <span class="text-[11px] text-indigo-700 font-medium">下方即時計算各部位相對指數</span>
           </div>
-          <div class="grid grid-cols-5 gap-2">
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">左臂肌肉 (%)</span>
-              <input type="number" step="0.1" id="fLeanPctLA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgLA">2.0</span> kg</div>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-white p-2.5 rounded-lg border border-indigo-100 shadow-xs">
+              <span class="text-xs font-bold text-slate-700 block mb-1">雙臂肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctArms" value="30.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold text-indigo-950" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-semibold">相對指數: <span id="calcLeanIdxArms" class="font-bold">18.0</span></div>
             </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">右臂肌肉 (%)</span>
-              <input type="number" step="0.1" id="fLeanPctRA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgRA">2.0</span> kg</div>
+            <div class="bg-white p-2.5 rounded-lg border border-indigo-100 shadow-xs">
+              <span class="text-xs font-bold text-slate-700 block mb-1">軀幹肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctTrunk" value="25.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold text-indigo-950" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-semibold">相對指數: <span id="calcLeanIdxTrunk" class="font-bold">15.0</span></div>
             </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">軀幹肌肉 (%)</span>
-              <input type="number" step="0.1" id="fLeanPctTR" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgTR">18.0</span> kg</div>
-            </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">左腿肌肉 (%)</span>
-              <input type="number" step="0.1" id="fLeanPctLL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgLL">6.2</span> kg</div>
-            </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">右腿肌肉 (%)</span>
-              <input type="number" step="0.1" id="fLeanPctRL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-indigo-800 text-center mt-1 font-bold"><span id="calcLeanKgRL">6.2</span> kg</div>
+            <div class="bg-white p-2.5 rounded-lg border border-indigo-100 shadow-xs">
+              <span class="text-xs font-bold text-slate-700 block mb-1">雙腳肌肉 (%)</span>
+              <input type="number" step="0.1" id="fLeanPctLegs" value="48.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold text-indigo-950" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-indigo-800 text-center mt-1 font-semibold">相對指數: <span id="calcLeanIdxLegs" class="font-bold">28.8</span></div>
             </div>
           </div>
         </div>
 
-        <!-- 4. 四肢皮下脂肪 (輸入%數 -> 自動換算實際重量kg) -->
+        <!-- 4. 部位皮下脂肪率 (輸入 雙臂 / 軀幹 / 雙腳 % 數) -->
         <div class="bg-rose-50/50 p-4 rounded-xl border border-rose-100 space-y-2">
           <div class="flex items-center justify-between">
-            <h4 class="text-xs font-bold text-rose-900 uppercase tracking-wider">
-              四肢與軀幹皮下脂肪 (輸入達成率 % 數)
+            <h4 class="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span>部位皮下脂肪率 (輸入雙臂 · 軀幹 · 雙腳 %)</span>
             </h4>
-            <span class="text-[11px] text-rose-700 font-medium">系統依標準脂肪分配自動換算重量 (kg)</span>
+            <span class="text-[11px] text-rose-700 font-medium">下方即時計算各部位相對指數</span>
           </div>
-          <div class="grid grid-cols-5 gap-2">
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">左臂脂肪 (%)</span>
-              <input type="number" step="0.1" id="fFatPctLA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgLA">0.9</span> kg</div>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-white p-2.5 rounded-lg border border-rose-100 shadow-xs">
+              <span class="text-xs font-bold text-slate-700 block mb-1">雙臂脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctArms" value="20.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold text-rose-950" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-semibold">相對指數: <span id="calcFatIdxArms" class="font-bold">12.0</span></div>
             </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">右臂脂肪 (%)</span>
-              <input type="number" step="0.1" id="fFatPctRA" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgRA">0.9</span> kg</div>
+            <div class="bg-white p-2.5 rounded-lg border border-rose-100 shadow-xs">
+              <span class="text-xs font-bold text-slate-700 block mb-1">軀幹脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctTrunk" value="18.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold text-rose-950" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-semibold">相對指數: <span id="calcFatIdxTrunk" class="font-bold">10.8</span></div>
             </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">軀幹脂肪 (%)</span>
-              <input type="number" step="0.1" id="fFatPctTR" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgTR">5.0</span> kg</div>
-            </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">左腿脂肪 (%)</span>
-              <input type="number" step="0.1" id="fFatPctLL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgLL">2.1</span> kg</div>
-            </div>
-            <div>
-              <span class="text-[11px] font-bold text-slate-600">右腿脂肪 (%)</span>
-              <input type="number" step="0.1" id="fFatPctRL" value="100.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold" oninput="calculateSegmentalOnInput()">
-              <div class="text-[11px] text-rose-800 text-center mt-1 font-bold"><span id="calcFatKgRL">2.1</span> kg</div>
+            <div class="bg-white p-2.5 rounded-lg border border-rose-100 shadow-xs">
+              <span class="text-xs font-bold text-slate-700 block mb-1">雙腳脂肪 (%)</span>
+              <input type="number" step="0.1" id="fFatPctLegs" value="22.0" class="w-full text-xs p-1.5 border rounded bg-white text-center font-bold text-rose-950" oninput="calculateSegmentalOnInput()">
+              <div class="text-[11px] text-rose-800 text-center mt-1 font-semibold">相對指數: <span id="calcFatIdxLegs" class="font-bold">13.2</span></div>
             </div>
           </div>
         </div>
@@ -918,6 +947,26 @@
       const bfmMax = Number((idealBfm * 1.35).toFixed(1));
 
       return { isMale, idealWeight, weightMin, weightMax, idealSmm, smmMin, smmMax, idealBfm, bfmMin, bfmMax };
+    }
+
+    // 🌟 三大部位 (雙臂、軀幹、雙腳) 骨骼肌率與皮下脂肪率標準基準 (男女別)
+    const BENCHMARKS = {
+      male: {
+        arms: { mMin: 28.0, mMax: 44.0, fMin: 8.0, fMax: 22.0 },
+        trunk: { mMin: 24.0, mMax: 36.0, fMin: 7.0, fMax: 20.0 },
+        legs: { mMin: 45.0, mMax: 62.0, fMin: 9.0, fMax: 21.0 }
+      },
+      female: {
+        arms: { mMin: 21.0, mMax: 33.0, fMin: 18.0, fMax: 36.0 },
+        trunk: { mMin: 16.5, mMax: 27.5, fMin: 15.0, fMax: 32.0 },
+        legs: { mMin: 36.5, mMax: 50.5, fMin: 20.0, fMax: 38.0 }
+      }
+    };
+
+    function getStatusBadge(val, min, max) {
+      if (val < min) return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">不足</span>';
+      if (val > max) return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">偏高</span>';
+      return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">標準</span>';
     }
 
     // 四肢基準分配 (用於由 % 換算實際重量 kg)
@@ -1222,37 +1271,52 @@
         ? `體脂率高於標準上限，建議配合適度飲食與肌力訓練增加肌肉量。`
         : `各項身體組成處於良好標準區間，請繼續維持健康作息。`;
 
-      // 動態更新部位別 SVG 輪廓
-      document.getElementById("leanSilhouetteSvg").innerHTML = renderSilhouette(gender, 'lean');
-      document.getElementById("fatSilhouetteSvg").innerHTML = renderSilhouette(gender, 'fat');
+      // 讀取三大部位數據 (支援新版 segmental 雙臂/軀幹/雙腳 或相容舊版)
+      const seg = cur.segmental || {};
+      const segLean = cur.segmentalLean || {};
+      const segFat = cur.segmentalFat || {};
 
-      // 更新五部位數據 (自動由 % 換算的重量與百分比)
-      const l = cur.segmentalLean || { leftArm: { value: 0, percentage: 100 }, rightArm: { value: 0, percentage: 100 }, trunk: { value: 0, percentage: 100 }, leftLeg: { value: 0, percentage: 100 }, rightLeg: { value: 0, percentage: 100 } };
-      const f = cur.segmentalFat || { leftArm: { value: 0, percentage: 100 }, rightArm: { value: 0, percentage: 100 }, trunk: { value: 0, percentage: 100 }, leftLeg: { value: 0, percentage: 100 }, rightLeg: { value: 0, percentage: 100 } };
+      const lArms = seg.arms?.muscle_pct ?? (segLean.leftArm?.percentage ?? 30.0);
+      const lTrunk = seg.trunk?.muscle_pct ?? (segLean.trunk?.percentage ?? 25.0);
+      const lLegs = seg.legs?.muscle_pct ?? (segLean.leftLeg?.percentage ?? 48.0);
 
-      document.getElementById("segmentalLeanTotal").textContent = `骨骼肌總量: ${cur.smm} kg`;
-      document.getElementById("valLeanLA").textContent = `${l.leftArm.value} kg`;
-      document.getElementById("pctLeanLA").textContent = `${l.leftArm.percentage}%`;
-      document.getElementById("valLeanRA").textContent = `${l.rightArm.value} kg`;
-      document.getElementById("pctLeanRA").textContent = `${l.rightArm.percentage}%`;
-      document.getElementById("valLeanTR").textContent = `${l.trunk.value} kg`;
-      document.getElementById("pctLeanTR").textContent = `${l.trunk.percentage}%`;
-      document.getElementById("valLeanLL").textContent = `${l.leftLeg.value} kg`;
-      document.getElementById("pctLeanLL").textContent = `${l.leftLeg.percentage}%`;
-      document.getElementById("valLeanRL").textContent = `${l.rightLeg.value} kg`;
-      document.getElementById("pctLeanRL").textContent = `${l.rightLeg.percentage}%`;
+      const fArms = seg.arms?.fat_pct ?? (segFat.leftArm?.percentage ?? 20.0);
+      const fTrunk = seg.trunk?.fat_pct ?? (segFat.trunk?.percentage ?? 18.0);
+      const fLegs = seg.legs?.fat_pct ?? (segFat.leftLeg?.percentage ?? 22.0);
 
-      document.getElementById("segmentalFatTotal").textContent = `體脂肪總量: ${cur.bfm} kg`;
-      document.getElementById("valFatLA").textContent = `${f.leftArm.value} kg`;
-      document.getElementById("pctFatLA").textContent = `${f.leftArm.percentage}%`;
-      document.getElementById("valFatRA").textContent = `${f.rightArm.value} kg`;
-      document.getElementById("pctFatRA").textContent = `${f.rightArm.percentage}%`;
-      document.getElementById("valFatTR").textContent = `${f.trunk.value} kg`;
-      document.getElementById("pctFatTR").textContent = `${f.trunk.percentage}%`;
-      document.getElementById("valFatLL").textContent = `${f.leftLeg.value} kg`;
-      document.getElementById("pctFatLL").textContent = `${f.leftLeg.percentage}%`;
-      document.getElementById("valFatRL").textContent = `${f.rightLeg.value} kg`;
-      document.getElementById("pctFatRL").textContent = `${f.rightLeg.percentage}%`;
+      const idxLArms = seg.arms?.relative_muscle_index ?? Number(((cur.weight * lArms) / 100).toFixed(1));
+      const idxLTrunk = seg.trunk?.relative_muscle_index ?? Number(((cur.weight * lTrunk) / 100).toFixed(1));
+      const idxLLegs = seg.legs?.relative_muscle_index ?? Number(((cur.weight * lLegs) / 100).toFixed(1));
+
+      const idxFArms = seg.arms?.relative_fat_index ?? Number(((cur.weight * fArms) / 100).toFixed(1));
+      const idxFTrunk = seg.trunk?.relative_fat_index ?? Number(((cur.weight * fTrunk) / 100).toFixed(1));
+      const idxFLegs = seg.legs?.relative_fat_index ?? Number(((cur.weight * fLegs) / 100).toFixed(1));
+
+      const b = BENCHMARKS[gender] || BENCHMARKS.female;
+
+      document.getElementById("valMuscleArms").innerHTML = `${lArms}<span class="text-xs font-normal text-slate-500 ml-0.5">%</span>`;
+      document.getElementById("idxMuscleArms").textContent = idxLArms;
+      document.getElementById("badgeMuscleArms").outerHTML = `<span id="badgeMuscleArms">${getStatusBadge(lArms, b.arms.mMin, b.arms.mMax)}</span>`;
+
+      document.getElementById("valFatArms").innerHTML = `${fArms}<span class="text-xs font-normal text-slate-500 ml-0.5">%</span>`;
+      document.getElementById("idxFatArms").textContent = idxFArms;
+      document.getElementById("badgeFatArms").outerHTML = `<span id="badgeFatArms">${getStatusBadge(fArms, b.arms.fMin, b.arms.fMax)}</span>`;
+
+      document.getElementById("valMuscleTrunk").innerHTML = `${lTrunk}<span class="text-xs font-normal text-slate-500 ml-0.5">%</span>`;
+      document.getElementById("idxMuscleTrunk").textContent = idxLTrunk;
+      document.getElementById("badgeMuscleTrunk").outerHTML = `<span id="badgeMuscleTrunk">${getStatusBadge(lTrunk, b.trunk.mMin, b.trunk.mMax)}</span>`;
+
+      document.getElementById("valFatTrunk").innerHTML = `${fTrunk}<span class="text-xs font-normal text-slate-500 ml-0.5">%</span>`;
+      document.getElementById("idxFatTrunk").textContent = idxFTrunk;
+      document.getElementById("badgeFatTrunk").outerHTML = `<span id="badgeFatTrunk">${getStatusBadge(fTrunk, b.trunk.fMin, b.trunk.fMax)}</span>`;
+
+      document.getElementById("valMuscleLegs").innerHTML = `${lLegs}<span class="text-xs font-normal text-slate-500 ml-0.5">%</span>`;
+      document.getElementById("idxMuscleLegs").textContent = idxLLegs;
+      document.getElementById("badgeMuscleLegs").outerHTML = `<span id="badgeMuscleLegs">${getStatusBadge(lLegs, b.legs.mMin, b.legs.mMax)}</span>`;
+
+      document.getElementById("valFatLegs").innerHTML = `${fLegs}<span class="text-xs font-normal text-slate-500 ml-0.5">%</span>`;
+      document.getElementById("idxFatLegs").textContent = idxFLegs;
+      document.getElementById("badgeFatLegs").outerHTML = `<span id="badgeFatLegs">${getStatusBadge(fLegs, b.legs.fMin, b.legs.fMax)}</span>`;
 
       renderHistoryTable();
     }
@@ -1381,38 +1445,51 @@
         sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">Lv ${r.visceralFatLevel}</td>`; });
         tbody += `</tr>`;
       } else {
-        // 第二頁：四肢與軀幹肌肉量 (kg 與 %) 及 四肢皮下脂肪量 (kg 與 %)
-        // 肌肉列
-        const renderLeanRow = (name, key) => {
-          tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-indigo-50/50 sticky left-0 z-10 text-indigo-900">${name}肌肉 (kg / %)</td>`;
+        // 第二頁：雙臂、軀幹、雙腳 部位分析 (骨骼肌率% 與 皮下脂肪率%)
+        const renderRow = (label, getVal, bgClass, textClass) => {
+          tbody += `<tr><td class="py-2 px-3 text-left font-bold ${bgClass} sticky left-0 z-10 ${textClass}">${label}</td>`;
           sorted.forEach(r => {
-            const data = r.segmentalLean?.[key] || { value: '-', percentage: '-' };
-            tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${data.value} kg <span class="text-[10px] text-slate-400">(${data.percentage}%)</span></td>`;
+            const v = getVal(r);
+            tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${v}</td>`;
           });
           tbody += `</tr>`;
         };
 
-        renderLeanRow('左臂', 'leftArm');
-        renderLeanRow('右臂', 'rightArm');
-        renderLeanRow('軀幹', 'trunk');
-        renderLeanRow('左腿', 'leftLeg');
-        renderLeanRow('右腿', 'rightLeg');
+        renderRow('雙臂 骨骼肌率 (%)', r => {
+          const p = r.segmental?.arms?.muscle_pct ?? (r.segmentalLean?.leftArm?.percentage ?? '-');
+          const idx = r.segmental?.arms?.relative_muscle_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
+          return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
+        }, 'bg-indigo-50/50', 'text-indigo-900');
 
-        // 脂肪列
-        const renderFatRow = (name, key) => {
-          tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-rose-50/50 sticky left-0 z-10 text-rose-900">${name}皮下脂肪 (kg / %)</td>`;
-          sorted.forEach(r => {
-            const data = r.segmentalFat?.[key] || { value: '-', percentage: '-' };
-            tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${data.value} kg <span class="text-[10px] text-slate-400">(${data.percentage}%)</span></td>`;
-          });
-          tbody += `</tr>`;
-        };
+        renderRow('軀幹 骨骼肌率 (%)', r => {
+          const p = r.segmental?.trunk?.muscle_pct ?? (r.segmentalLean?.trunk?.percentage ?? '-');
+          const idx = r.segmental?.trunk?.relative_muscle_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
+          return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
+        }, 'bg-indigo-50/50', 'text-indigo-900');
 
-        renderFatRow('左臂', 'leftArm');
-        renderFatRow('右臂', 'rightArm');
-        renderFatRow('軀幹', 'trunk');
-        renderFatRow('左腿', 'leftLeg');
-        renderFatRow('右腿', 'rightLeg');
+        renderRow('雙腳 骨骼肌率 (%)', r => {
+          const p = r.segmental?.legs?.muscle_pct ?? (r.segmentalLean?.leftLeg?.percentage ?? '-');
+          const idx = r.segmental?.legs?.relative_muscle_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
+          return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
+        }, 'bg-indigo-50/50', 'text-indigo-900');
+
+        renderRow('雙臂 皮下脂肪率 (%)', r => {
+          const p = r.segmental?.arms?.fat_pct ?? (r.segmentalFat?.leftArm?.percentage ?? '-');
+          const idx = r.segmental?.arms?.relative_fat_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
+          return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
+        }, 'bg-rose-50/50', 'text-rose-900');
+
+        renderRow('軀幹 皮下脂肪率 (%)', r => {
+          const p = r.segmental?.trunk?.fat_pct ?? (r.segmentalFat?.trunk?.percentage ?? '-');
+          const idx = r.segmental?.trunk?.relative_fat_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
+          return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
+        }, 'bg-rose-50/50', 'text-rose-900');
+
+        renderRow('雙腳 皮下脂肪率 (%)', r => {
+          const p = r.segmental?.legs?.fat_pct ?? (r.segmentalFat?.leftLeg?.percentage ?? '-');
+          const idx = r.segmental?.legs?.relative_fat_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
+          return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
+        }, 'bg-rose-50/50', 'text-rose-900');
       }
 
       tbody += `</tbody>`;
@@ -1445,37 +1522,27 @@
       calculateSegmentalOnInput();
     }
 
-    // 表單輸入即時換算：四肢肌肉%與皮下脂肪% -> 換算各部位kg
+    // 表單輸入即時換算：雙臂、軀幹、雙腳肌肉%與皮下脂肪% -> 換算相對指數
     function calculateSegmentalOnInput() {
-      const h = parseFloat(document.getElementById("fHeight").value) || 160;
-      const gender = document.getElementById("fGender").value;
-      const std = getLimbStandards(h, gender);
+      const w = parseFloat(document.getElementById("fWeight").value) || 60;
 
-      // 肌肉換算
-      const lLA = parseFloat(document.getElementById("fLeanPctLA").value) || 100;
-      const lRA = parseFloat(document.getElementById("fLeanPctRA").value) || 100;
-      const lTR = parseFloat(document.getElementById("fLeanPctTR").value) || 100;
-      const lLL = parseFloat(document.getElementById("fLeanPctLL").value) || 100;
-      const lRL = parseFloat(document.getElementById("fLeanPctRL").value) || 100;
+      // 雙臂、軀幹、雙腳 骨骼肌率
+      const lArms = parseFloat(document.getElementById("fLeanPctArms").value) || 0;
+      const lTrunk = parseFloat(document.getElementById("fLeanPctTrunk").value) || 0;
+      const lLegs = parseFloat(document.getElementById("fLeanPctLegs").value) || 0;
 
-      document.getElementById("calcLeanKgLA").textContent = Number((std.lean.la * (lLA / 100)).toFixed(2));
-      document.getElementById("calcLeanKgRA").textContent = Number((std.lean.ra * (lRA / 100)).toFixed(2));
-      document.getElementById("calcLeanKgTR").textContent = Number((std.lean.tr * (lTR / 100)).toFixed(1));
-      document.getElementById("calcLeanKgLL").textContent = Number((std.lean.ll * (lLL / 100)).toFixed(2));
-      document.getElementById("calcLeanKgRL").textContent = Number((std.lean.rl * (lRL / 100)).toFixed(2));
+      document.getElementById("calcLeanIdxArms").textContent = Number(((w * lArms) / 100).toFixed(1));
+      document.getElementById("calcLeanIdxTrunk").textContent = Number(((w * lTrunk) / 100).toFixed(1));
+      document.getElementById("calcLeanIdxLegs").textContent = Number(((w * lLegs) / 100).toFixed(1));
 
-      // 皮下脂肪換算
-      const fLA = parseFloat(document.getElementById("fFatPctLA").value) || 100;
-      const fRA = parseFloat(document.getElementById("fFatPctRA").value) || 100;
-      const fTR = parseFloat(document.getElementById("fFatPctTR").value) || 100;
-      const fLL = parseFloat(document.getElementById("fFatPctLL").value) || 100;
-      const fRL = parseFloat(document.getElementById("fFatPctRL").value) || 100;
+      // 雙臂、軀幹、雙腳 皮下脂肪率
+      const fArms = parseFloat(document.getElementById("fFatPctArms").value) || 0;
+      const fTrunk = parseFloat(document.getElementById("fFatPctTrunk").value) || 0;
+      const fLegs = parseFloat(document.getElementById("fFatPctLegs").value) || 0;
 
-      document.getElementById("calcFatKgLA").textContent = Number((std.fat.la * (fLA / 100)).toFixed(2));
-      document.getElementById("calcFatKgRA").textContent = Number((std.fat.ra * (fRA / 100)).toFixed(2));
-      document.getElementById("calcFatKgTR").textContent = Number((std.fat.tr * (fTR / 100)).toFixed(1));
-      document.getElementById("calcFatKgLL").textContent = Number((std.fat.ll * (fLL / 100)).toFixed(2));
-      document.getElementById("calcFatKgRL").textContent = Number((std.fat.rl * (fRL / 100)).toFixed(2));
+      document.getElementById("calcFatIdxArms").textContent = Number(((w * fArms) / 100).toFixed(1));
+      document.getElementById("calcFatIdxTrunk").textContent = Number(((w * fTrunk) / 100).toFixed(1));
+      document.getElementById("calcFatIdxLegs").textContent = Number(((w * fLegs) / 100).toFixed(1));
     }
 
     function openDataModalForEdit(cur) {
@@ -1491,20 +1558,26 @@
       document.getElementById("fPbf").value = cur.pbf;
       document.getElementById("fVisceral").value = cur.visceralFatLevel;
 
-      const l = cur.segmentalLean || { leftArm: { percentage: 100 }, rightArm: { percentage: 100 }, trunk: { percentage: 100 }, leftLeg: { percentage: 100 }, rightLeg: { percentage: 100 } };
-      const f = cur.segmentalFat || { leftArm: { percentage: 100 }, rightArm: { percentage: 100 }, trunk: { percentage: 100 }, leftLeg: { percentage: 100 }, rightLeg: { percentage: 100 } };
+      // 取得部位數據（優先讀取 segmental，兼容舊 segmentalLean/Fat）
+      const seg = cur.segmental || {};
+      const segLean = cur.segmentalLean || {};
+      const segFat = cur.segmentalFat || {};
 
-      document.getElementById("fLeanPctLA").value = l.leftArm?.percentage || 100;
-      document.getElementById("fLeanPctRA").value = l.rightArm?.percentage || 100;
-      document.getElementById("fLeanPctTR").value = l.trunk?.percentage || 100;
-      document.getElementById("fLeanPctLL").value = l.leftLeg?.percentage || 100;
-      document.getElementById("fLeanPctRL").value = l.rightLeg?.percentage || 100;
+      const lArms = seg.arms?.muscle_pct ?? (segLean.leftArm?.percentage ?? 30.0);
+      const lTrunk = seg.trunk?.muscle_pct ?? (segLean.trunk?.percentage ?? 25.0);
+      const lLegs = seg.legs?.muscle_pct ?? (segLean.leftLeg?.percentage ?? 48.0);
 
-      document.getElementById("fFatPctLA").value = f.leftArm?.percentage || 100;
-      document.getElementById("fFatPctRA").value = f.rightArm?.percentage || 100;
-      document.getElementById("fFatPctTR").value = f.trunk?.percentage || 100;
-      document.getElementById("fFatPctLL").value = f.leftLeg?.percentage || 100;
-      document.getElementById("fFatPctRL").value = f.rightLeg?.percentage || 100;
+      const fArms = seg.arms?.fat_pct ?? (segFat.leftArm?.percentage ?? 20.0);
+      const fTrunk = seg.trunk?.fat_pct ?? (segFat.trunk?.percentage ?? 18.0);
+      const fLegs = seg.legs?.fat_pct ?? (segFat.leftLeg?.percentage ?? 22.0);
+
+      document.getElementById("fLeanPctArms").value = lArms;
+      document.getElementById("fLeanPctTrunk").value = lTrunk;
+      document.getElementById("fLeanPctLegs").value = lLegs;
+
+      document.getElementById("fFatPctArms").value = fArms;
+      document.getElementById("fFatPctTrunk").value = fTrunk;
+      document.getElementById("fFatPctLegs").value = fLegs;
 
       calculateBfmOnInput();
       document.getElementById("dataModal").classList.remove("hidden");
@@ -1727,11 +1800,24 @@
         document.getElementById("fPbf").value = user.gender === 'male' ? 15.0 : 22.0;
         document.getElementById("fVisceral").value = 5;
 
-        // 重置四肢百分比預設為 100%
-        ['LA','RA','TR','LL','RL'].forEach(k => {
-          document.getElementById(`fLeanPct${k}`).value = 100.0;
-          document.getElementById(`fFatPct${k}`).value = 100.0;
-        });
+        // 依性別設定預設 雙臂、軀幹、雙腳 骨骼肌率 與 皮下脂肪率
+        if (user.gender === 'male') {
+          document.getElementById("fLeanPctArms").value = 35.0;
+          document.getElementById("fLeanPctTrunk").value = 30.0;
+          document.getElementById("fLeanPctLegs").value = 53.0;
+
+          document.getElementById("fFatPctArms").value = 14.0;
+          document.getElementById("fFatPctTrunk").value = 13.0;
+          document.getElementById("fFatPctLegs").value = 14.0;
+        } else {
+          document.getElementById("fLeanPctArms").value = 27.0;
+          document.getElementById("fLeanPctTrunk").value = 22.0;
+          document.getElementById("fLeanPctLegs").value = 43.0;
+
+          document.getElementById("fFatPctArms").value = 27.0;
+          document.getElementById("fFatPctTrunk").value = 23.0;
+          document.getElementById("fFatPctLegs").value = 28.0;
+        }
 
         calculateBfmOnInput();
         document.getElementById("dataModal").classList.remove("hidden");
@@ -1753,7 +1839,7 @@
         document.getElementById("backupModal").classList.remove("hidden");
       };
 
-      // 提交檢測資料儲存 (自動將 % 數換算為實際 kg 儲存)
+      // 提交檢測資料儲存
       document.getElementById("recordForm").onsubmit = (e) => {
         e.preventDefault();
         const user = users.find(u => u.id === currentUserId);
@@ -1773,35 +1859,60 @@
         const bmi = Number((weight / ((height/100)*(height/100))).toFixed(1));
         const bfm = Number(((weight * pbf) / 100).toFixed(1));
 
-        // 換算四肢與軀幹肌肉量 kg
-        const limbStd = getLimbStandards(height, gender);
-        const lLA_pct = parseFloat(document.getElementById("fLeanPctLA").value);
-        const lRA_pct = parseFloat(document.getElementById("fLeanPctRA").value);
-        const lTR_pct = parseFloat(document.getElementById("fLeanPctTR").value);
-        const lLL_pct = parseFloat(document.getElementById("fLeanPctLL").value);
-        const lRL_pct = parseFloat(document.getElementById("fLeanPctRL").value);
+        // 讀取雙臂、軀幹、雙腳數據
+        const lArms = parseFloat(document.getElementById("fLeanPctArms").value) || 0;
+        const lTrunk = parseFloat(document.getElementById("fLeanPctTrunk").value) || 0;
+        const lLegs = parseFloat(document.getElementById("fLeanPctLegs").value) || 0;
 
-        const segmentalLean = {
-          leftArm: { value: Number((limbStd.lean.la * (lLA_pct / 100)).toFixed(2)), percentage: lLA_pct, status: "normal" },
-          rightArm: { value: Number((limbStd.lean.ra * (lRA_pct / 100)).toFixed(2)), percentage: lRA_pct, status: "normal" },
-          trunk: { value: Number((limbStd.lean.tr * (lTR_pct / 100)).toFixed(1)), percentage: lTR_pct, status: "normal" },
-          leftLeg: { value: Number((limbStd.lean.ll * (lLL_pct / 100)).toFixed(2)), percentage: lLL_pct, status: "normal" },
-          rightLeg: { value: Number((limbStd.lean.rl * (lRL_pct / 100)).toFixed(2)), percentage: lRL_pct, status: "normal" }
+        const fArms = parseFloat(document.getElementById("fFatPctArms").value) || 0;
+        const fTrunk = parseFloat(document.getElementById("fFatPctTrunk").value) || 0;
+        const fLegs = parseFloat(document.getElementById("fFatPctLegs").value) || 0;
+
+        // 計算相對指數
+        const idxLArms = Number(((weight * lArms) / 100).toFixed(1));
+        const idxLTrunk = Number(((weight * lTrunk) / 100).toFixed(1));
+        const idxLLegs = Number(((weight * lLegs) / 100).toFixed(1));
+
+        const idxFArms = Number(((weight * fArms) / 100).toFixed(1));
+        const idxFTrunk = Number(((weight * fTrunk) / 100).toFixed(1));
+        const idxFLegs = Number(((weight * fLegs) / 100).toFixed(1));
+
+        const segmental = {
+          arms: {
+            muscle_pct: lArms,
+            relative_muscle_index: idxLArms,
+            fat_pct: fArms,
+            relative_fat_index: idxFArms
+          },
+          trunk: {
+            muscle_pct: lTrunk,
+            relative_muscle_index: idxLTrunk,
+            fat_pct: fTrunk,
+            relative_fat_index: idxFTrunk
+          },
+          legs: {
+            muscle_pct: lLegs,
+            relative_muscle_index: idxLLegs,
+            fat_pct: fLegs,
+            relative_fat_index: idxFLegs
+          }
         };
 
-        // 換算四肢與軀幹皮下脂肪量 kg
-        const fLA_pct = parseFloat(document.getElementById("fFatPctLA").value);
-        const fRA_pct = parseFloat(document.getElementById("fFatPctRA").value);
-        const fTR_pct = parseFloat(document.getElementById("fFatPctTR").value);
-        const fLL_pct = parseFloat(document.getElementById("fFatPctLL").value);
-        const fRL_pct = parseFloat(document.getElementById("fFatPctRL").value);
+        // 兼容舊 5 部位結構
+        const segmentalLean = {
+          leftArm: { value: idxLArms, percentage: lArms, status: "normal" },
+          rightArm: { value: idxLArms, percentage: lArms, status: "normal" },
+          trunk: { value: idxLTrunk, percentage: lTrunk, status: "normal" },
+          leftLeg: { value: idxLLegs, percentage: lLegs, status: "normal" },
+          rightLeg: { value: idxLLegs, percentage: lLegs, status: "normal" }
+        };
 
         const segmentalFat = {
-          leftArm: { value: Number((limbStd.fat.la * (fLA_pct / 100)).toFixed(2)), percentage: fLA_pct, status: "normal" },
-          rightArm: { value: Number((limbStd.fat.ra * (fRA_pct / 100)).toFixed(2)), percentage: fRA_pct, status: "normal" },
-          trunk: { value: Number((limbStd.fat.tr * (fTR_pct / 100)).toFixed(1)), percentage: fTR_pct, status: "normal" },
-          leftLeg: { value: Number((limbStd.fat.ll * (fLL_pct / 100)).toFixed(2)), percentage: fLL_pct, status: "normal" },
-          rightLeg: { value: Number((limbStd.fat.rl * (fRL_pct / 100)).toFixed(2)), percentage: fRL_pct, status: "normal" }
+          leftArm: { value: idxFArms, percentage: fArms, status: "normal" },
+          rightArm: { value: idxFArms, percentage: fArms, status: "normal" },
+          trunk: { value: idxFTrunk, percentage: fTrunk, status: "normal" },
+          leftLeg: { value: idxFLegs, percentage: fLegs, status: "normal" },
+          rightLeg: { value: idxFLegs, percentage: fLegs, status: "normal" }
         };
 
         if (editingId) {
@@ -1811,7 +1922,7 @@
               ...records[idx],
               date, time, gender, weight, smm, pbf, height, age, bmi, bfm,
               visceralFatLevel: visceral,
-              segmentalLean, segmentalFat
+              segmental, segmentalLean, segmentalFat
             };
             currentId = editingId;
           }
@@ -1820,6 +1931,13 @@
             id: `rec-${date.replace(/-/g,'')}-${time.replace(/:/g,'')}-${Date.now().toString().slice(-4)}`,
             userId: currentUserId,
             date, time, name: user.name, gender, age, height,
+            weight, smm, pbf, bmi, bfm,
+            visceralFatLevel: visceral,
+            segmental, segmentalLean, segmentalFat
+          };
+          records.unshift(newRec);
+          currentId = newRec.id;
+        }
             weight, smm, pbf, bmi, bfm,
             visceralFatLevel: visceral,
             segmentalLean, segmentalFat
