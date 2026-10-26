@@ -1938,13 +1938,6 @@
           records.unshift(newRec);
           currentId = newRec.id;
         }
-            weight, smm, pbf, bmi, bfm,
-            visceralFatLevel: visceral,
-            segmentalLean, segmentalFat
-          };
-          records.unshift(newRec);
-          currentId = newRec.id;
-        }
 
         saveState();
         closeDataModal();
@@ -1962,11 +1955,18 @@
     }
 
     function exportCSV() {
-      const header = ["ID,使用者ID,日期,時間,姓名,性別,身高,年齡,體重,骨骼肌重,體脂率,換算脂肪重,BMI,內臟脂肪等級,左臂肌kg,右臂肌kg,軀幹肌kg,左腿肌kg,右腿肌kg,左臂脂kg,右臂脂kg,軀幹脂kg,左腿脂kg,右腿脂kg"];
+      const header = ["ID,使用者ID,日期,時間,姓名,性別,身高,年齡,體重,骨骼肌重,體脂率,換算脂肪重,BMI,內臟脂肪等級,雙臂肌%,軀幹肌%,雙腳肌%,雙臂脂%,軀幹脂%,雙腳脂%"];
       const rows = records.map(r => {
+        const seg = r.segmental || {};
         const l = r.segmentalLean || {};
         const f = r.segmentalFat || {};
-        return `${r.id},${r.userId || ''},${r.date},${r.time},${r.name},${r.gender === 'male' ? '男' : '女'},${r.height},${r.age},${r.weight},${r.smm},${r.pbf},${r.bfm},${r.bmi},${r.visceralFatLevel},${l.leftArm?.value || ''},${l.rightArm?.value || ''},${l.trunk?.value || ''},${l.leftLeg?.value || ''},${l.rightLeg?.value || ''},${f.leftArm?.value || ''},${f.rightArm?.value || ''},${f.trunk?.value || ''},${f.leftLeg?.value || ''},${f.rightLeg?.value || ''}`;
+        const lArms = seg.arms?.muscle_pct ?? (l.leftArm?.percentage ?? '');
+        const lTrunk = seg.trunk?.muscle_pct ?? (l.trunk?.percentage ?? '');
+        const lLegs = seg.legs?.muscle_pct ?? (l.leftLeg?.percentage ?? '');
+        const fArms = seg.arms?.fat_pct ?? (f.leftArm?.percentage ?? '');
+        const fTrunk = seg.trunk?.fat_pct ?? (f.trunk?.percentage ?? '');
+        const fLegs = seg.legs?.fat_pct ?? (f.leftLeg?.percentage ?? '');
+        return `${r.id},${r.userId || ''},${r.date},${r.time},${r.name},${r.gender === 'male' ? '男' : '女'},${r.height},${r.age},${r.weight},${r.smm},${r.pbf},${r.bfm},${r.bmi},${r.visceralFatLevel},${lArms},${lTrunk},${lLegs},${fArms},${fTrunk},${fLegs}`;
       });
       const csv = "\uFEFF" + [header, ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
