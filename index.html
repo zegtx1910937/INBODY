@@ -584,13 +584,16 @@
 
           <!-- 分頁切換與修改紀錄操作 -->
           <div class="flex items-center gap-2.5">
-            <!-- 第一頁 / 第二頁 切換 Tabs -->
-            <div class="flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-bold">
-              <button id="btnTabHistoryPage1" onclick="switchHistoryTab(1)" class="px-3 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all">
-                第一頁：基礎組成 (體重/肌/脂)
+            <!-- 第一頁 / 第二頁 / 第三頁 切換 Tabs -->
+            <div class="flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-bold flex-wrap gap-0.5">
+              <button id="btnTabHistoryPage1" onclick="switchHistoryTab(1)" class="px-2.5 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all whitespace-nowrap">
+                第一頁：基礎組成
               </button>
-              <button id="btnTabHistoryPage2" onclick="switchHistoryTab(2)" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all">
-                第二頁：四肢部位分析 (肌肉/脂肪)
+              <button id="btnTabHistoryPage2" onclick="switchHistoryTab(2)" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">
+                第二頁：四肢軀幹肌肉
+              </button>
+              <button id="btnTabHistoryPage3" onclick="switchHistoryTab(3)" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">
+                第三頁：四肢軀幹脂肪
               </button>
             </div>
 
@@ -606,15 +609,15 @@
           <!-- 成效摘要 -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
-              <div class="text-xs text-blue-800 font-medium">累積體重變化</div>
+              <div class="text-xs text-blue-800 font-medium" id="statLabel1">累積體重變化</div>
               <div class="text-xl font-extrabold text-blue-950" id="statWeightLoss">0.0 kg</div>
             </div>
             <div class="bg-rose-50 border border-rose-100 rounded-lg p-3">
-              <div class="text-xs text-rose-800 font-medium">累積體脂率變化</div>
+              <div class="text-xs text-rose-800 font-medium" id="statLabel2">累積體脂率變化</div>
               <div class="text-xl font-extrabold text-rose-950" id="statPbfLoss">0.0%</div>
             </div>
             <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-              <div class="text-xs text-emerald-800 font-medium">骨骼肌維持率</div>
+              <div class="text-xs text-emerald-800 font-medium" id="statLabel3">骨骼肌維持率</div>
               <div class="text-xl font-extrabold text-emerald-950" id="statSmmLoss">100%</div>
             </div>
           </div>
@@ -1319,6 +1322,7 @@
       document.getElementById("badgeFatLegs").outerHTML = `<span id="badgeFatLegs">${getStatusBadge(fLegs, b.legs.fMin, b.legs.fMax)}</span>`;
 
       renderHistoryTable();
+      updateChart();
     }
 
     function initChart() {
@@ -1340,44 +1344,118 @@
       const sorted = [...userRecords].sort((a,b) => parseDateTime(a.date, a.time) - parseDateTime(b.date, b.time));
 
       trendChartInstance.data.labels = sorted.map(r => r.date.slice(2).replace(/-/g, '.'));
-      trendChartInstance.data.datasets = [
-        { label: '體重 (kg)', data: sorted.map(r => r.weight), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.2 },
-        { label: '骨骼肌重 (kg)', data: sorted.map(r => r.smm), borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.2 },
-        { label: '體脂率 (%)', data: sorted.map(r => r.pbf), borderColor: '#e11d48', backgroundColor: '#e11d48', tension: 0.2 }
-      ];
-      trendChartInstance.update();
 
-      if (sorted.length >= 2) {
-        const first = sorted[0];
-        const last = sorted[sorted.length - 1];
-        document.getElementById("statWeightLoss").textContent = `${(last.weight - first.weight) > 0 ? '+' : ''}${(last.weight - first.weight).toFixed(1)} kg`;
-        document.getElementById("statPbfLoss").textContent = `${(last.pbf - first.pbf) > 0 ? '+' : ''}${(last.pbf - first.pbf).toFixed(1)}%`;
-        document.getElementById("statSmmLoss").textContent = `${((last.smm / first.smm) * 100).toFixed(1)}%`;
+      if (activeHistoryTab === 1) {
+        // 第一頁：基礎組成 (體重 / 骨骼肌重 / 體脂率)
+        trendChartInstance.data.datasets = [
+          { label: '體重 (kg)', data: sorted.map(r => r.weight), borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.2 },
+          { label: '骨骼肌重 (kg)', data: sorted.map(r => r.smm), borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.2 },
+          { label: '體脂率 (%)', data: sorted.map(r => r.pbf), borderColor: '#e11d48', backgroundColor: '#e11d48', tension: 0.2 }
+        ];
+
+        if (sorted.length >= 2) {
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          document.getElementById("statLabel1").textContent = "累積體重變化";
+          document.getElementById("statWeightLoss").textContent = `${(last.weight - first.weight) > 0 ? '+' : ''}${(last.weight - first.weight).toFixed(1)} kg`;
+          document.getElementById("statLabel2").textContent = "累積體脂率變化";
+          document.getElementById("statPbfLoss").textContent = `${(last.pbf - first.pbf) > 0 ? '+' : ''}${(last.pbf - first.pbf).toFixed(1)}%`;
+          document.getElementById("statLabel3").textContent = "骨骼肌維持率";
+          document.getElementById("statSmmLoss").textContent = `${((last.smm / first.smm) * 100).toFixed(1)}%`;
+        } else {
+          document.getElementById("statLabel1").textContent = "累積體重變化";
+          document.getElementById("statWeightLoss").textContent = `0.0 kg`;
+          document.getElementById("statLabel2").textContent = "累積體脂率變化";
+          document.getElementById("statPbfLoss").textContent = `0.0%`;
+          document.getElementById("statLabel3").textContent = "骨骼肌維持率";
+          document.getElementById("statSmmLoss").textContent = `100%`;
+        }
+      } else if (activeHistoryTab === 2) {
+        // 第二頁：四肢及軀幹骨骼肌率 (%)
+        const mArms = sorted.map(r => r.segmental?.arms?.muscle_pct ?? (r.segmentalLean?.leftArm?.percentage ?? 0));
+        const mTrunk = sorted.map(r => r.segmental?.trunk?.muscle_pct ?? (r.segmentalLean?.trunk?.percentage ?? 0));
+        const mLegs = sorted.map(r => r.segmental?.legs?.muscle_pct ?? (r.segmentalLean?.leftLeg?.percentage ?? 0));
+
+        trendChartInstance.data.datasets = [
+          { label: '雙臂骨骼肌率 (%)', data: mArms, borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.2 },
+          { label: '軀幹骨骼肌率 (%)', data: mTrunk, borderColor: '#0284c7', backgroundColor: '#0284c7', tension: 0.2 },
+          { label: '雙腳骨骼肌率 (%)', data: mLegs, borderColor: '#059669', backgroundColor: '#059669', tension: 0.2 }
+        ];
+
+        if (sorted.length >= 2) {
+          const firstArms = mArms[0], lastArms = mArms[mArms.length - 1];
+          const firstTrunk = mTrunk[0], lastTrunk = mTrunk[mTrunk.length - 1];
+          const firstLegs = mLegs[0], lastLegs = mLegs[mLegs.length - 1];
+
+          document.getElementById("statLabel1").textContent = "雙臂肌肉變化";
+          document.getElementById("statWeightLoss").textContent = `${(lastArms - firstArms) > 0 ? '+' : ''}${(lastArms - firstArms).toFixed(1)}%`;
+          document.getElementById("statLabel2").textContent = "軀幹肌肉變化";
+          document.getElementById("statPbfLoss").textContent = `${(lastTrunk - firstTrunk) > 0 ? '+' : ''}${(lastTrunk - firstTrunk).toFixed(1)}%`;
+          document.getElementById("statLabel3").textContent = "雙腳肌肉變化";
+          document.getElementById("statSmmLoss").textContent = `${(lastLegs - firstLegs) > 0 ? '+' : ''}${(lastLegs - firstLegs).toFixed(1)}%`;
+        } else {
+          document.getElementById("statLabel1").textContent = "雙臂肌肉變化";
+          document.getElementById("statWeightLoss").textContent = `0.0%`;
+          document.getElementById("statLabel2").textContent = "軀幹肌肉變化";
+          document.getElementById("statPbfLoss").textContent = `0.0%`;
+          document.getElementById("statLabel3").textContent = "雙腳肌肉變化";
+          document.getElementById("statSmmLoss").textContent = `0.0%`;
+        }
       } else {
-        document.getElementById("statWeightLoss").textContent = `0.0 kg`;
-        document.getElementById("statPbfLoss").textContent = `0.0%`;
-        document.getElementById("statSmmLoss").textContent = `100%`;
+        // 第三頁：四肢及軀幹皮下脂肪率 (%)
+        const fArms = sorted.map(r => r.segmental?.arms?.fat_pct ?? (r.segmentalFat?.leftArm?.percentage ?? 0));
+        const fTrunk = sorted.map(r => r.segmental?.trunk?.fat_pct ?? (r.segmentalFat?.trunk?.percentage ?? 0));
+        const fLegs = sorted.map(r => r.segmental?.legs?.fat_pct ?? (r.segmentalFat?.leftLeg?.percentage ?? 0));
+
+        trendChartInstance.data.datasets = [
+          { label: '雙臂皮下脂肪率 (%)', data: fArms, borderColor: '#e11d48', backgroundColor: '#e11d48', tension: 0.2 },
+          { label: '軀幹皮下脂肪率 (%)', data: fTrunk, borderColor: '#d97706', backgroundColor: '#d97706', tension: 0.2 },
+          { label: '雙腳皮下脂肪率 (%)', data: fLegs, borderColor: '#db2777', backgroundColor: '#db2777', tension: 0.2 }
+        ];
+
+        if (sorted.length >= 2) {
+          const firstArms = fArms[0], lastArms = fArms[fArms.length - 1];
+          const firstTrunk = fTrunk[0], lastTrunk = fTrunk[fTrunk.length - 1];
+          const firstLegs = fLegs[0], lastLegs = fLegs[fLegs.length - 1];
+
+          document.getElementById("statLabel1").textContent = "雙臂脂肪變化";
+          document.getElementById("statWeightLoss").textContent = `${(lastArms - firstArms) > 0 ? '+' : ''}${(lastArms - firstArms).toFixed(1)}%`;
+          document.getElementById("statLabel2").textContent = "軀幹脂肪變化";
+          document.getElementById("statPbfLoss").textContent = `${(lastTrunk - firstTrunk) > 0 ? '+' : ''}${(lastTrunk - firstTrunk).toFixed(1)}%`;
+          document.getElementById("statLabel3").textContent = "雙腳脂肪變化";
+          document.getElementById("statSmmLoss").textContent = `${(lastLegs - firstLegs) > 0 ? '+' : ''}${(lastLegs - firstLegs).toFixed(1)}%`;
+        } else {
+          document.getElementById("statLabel1").textContent = "雙臂脂肪變化";
+          document.getElementById("statWeightLoss").textContent = `0.0%`;
+          document.getElementById("statLabel2").textContent = "軀幹脂肪變化";
+          document.getElementById("statPbfLoss").textContent = `0.0%`;
+          document.getElementById("statLabel3").textContent = "雙腳脂肪變化";
+          document.getElementById("statSmmLoss").textContent = `0.0%`;
+        }
       }
+
+      trendChartInstance.update();
     }
 
-    // 分頁切換 (第一頁: 基礎組成 / 第二頁: 四肢部位分析)
+    // 分頁切換 (第一頁: 基礎組成 / 第二頁: 四肢軀幹肌肉 / 第三頁: 四肢軀幹脂肪)
     function switchHistoryTab(tabIndex) {
       activeHistoryTab = tabIndex;
       const btn1 = document.getElementById("btnTabHistoryPage1");
       const btn2 = document.getElementById("btnTabHistoryPage2");
+      const btn3 = document.getElementById("btnTabHistoryPage3");
 
-      if (tabIndex === 1) {
-        btn1.className = "px-3 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all";
-        btn2.className = "px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all";
-      } else {
-        btn2.className = "px-3 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all";
-        btn1.className = "px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all";
-      }
+      const activeClass = "px-2.5 py-1 rounded-md bg-white text-slate-900 shadow-xs transition-all whitespace-nowrap font-bold";
+      const inactiveClass = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap font-semibold";
 
+      btn1.className = tabIndex === 1 ? activeClass : inactiveClass;
+      btn2.className = tabIndex === 2 ? activeClass : inactiveClass;
+      btn3.className = tabIndex === 3 ? activeClass : inactiveClass;
+
+      updateChart();
       renderHistoryTable();
     }
 
-    // 渲染歷史表格 (第一頁 / 第二頁)
+    // 渲染歷史表格 (第一頁 / 第二頁 / 第三頁)
     function renderHistoryTable() {
       const table = document.getElementById("historyTable");
       const user = users.find(u => u.id === currentUserId);
@@ -1401,9 +1479,13 @@
         return;
       }
 
+      let tabTitle = '基礎指標項目';
+      if (activeHistoryTab === 2) tabTitle = '四肢軀幹肌肉';
+      if (activeHistoryTab === 3) tabTitle = '四肢軀幹脂肪';
+
       let thead = `<thead><tr class="bg-slate-100 border-b border-slate-200 font-bold text-slate-700">
-        <th class="py-2.5 px-3 text-left w-32 bg-slate-200 sticky left-0 z-10">
-          ${activeHistoryTab === 1 ? '基礎指標項目' : '四肢部位指標'}
+        <th class="py-2.5 px-3 text-left w-36 bg-slate-200 sticky left-0 z-10 whitespace-nowrap">
+          ${tabTitle}
         </th>`;
       
       sorted.forEach(r => {
@@ -1418,6 +1500,15 @@
       thead += `</tr></thead>`;
 
       let tbody = `<tbody class="divide-y divide-slate-200 bg-white">`;
+
+      const renderRow = (label, getVal, bgClass, textClass) => {
+        tbody += `<tr><td class="py-2 px-3 text-left font-bold ${bgClass} sticky left-0 z-10 ${textClass}">${label}</td>`;
+        sorted.forEach(r => {
+          const v = getVal(r);
+          tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${v}</td>`;
+        });
+        tbody += `</tr>`;
+      };
 
       if (activeHistoryTab === 1) {
         // 第一頁：體重、骨骼肌重、體脂率、換算體脂肪重、BMI、內臟脂肪等級
@@ -1444,17 +1535,8 @@
         tbody += `<tr><td class="py-2 px-3 text-left font-bold bg-slate-50 sticky left-0 z-10 text-amber-700">內臟脂肪等級</td>`;
         sorted.forEach(r => { tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">Lv ${r.visceralFatLevel}</td>`; });
         tbody += `</tr>`;
-      } else {
-        // 第二頁：雙臂、軀幹、雙腳 部位分析 (骨骼肌率% 與 皮下脂肪率%)
-        const renderRow = (label, getVal, bgClass, textClass) => {
-          tbody += `<tr><td class="py-2 px-3 text-left font-bold ${bgClass} sticky left-0 z-10 ${textClass}">${label}</td>`;
-          sorted.forEach(r => {
-            const v = getVal(r);
-            tbody += `<td class="py-2 px-2 ${r.id === currentId ? 'bg-red-50/50 font-bold' : ''}">${v}</td>`;
-          });
-          tbody += `</tr>`;
-        };
-
+      } else if (activeHistoryTab === 2) {
+        // 第二頁：雙臂、軀幹、雙腳 骨骼肌率 (%)
         renderRow('雙臂 骨骼肌率 (%)', r => {
           const p = r.segmental?.arms?.muscle_pct ?? (r.segmentalLean?.leftArm?.percentage ?? '-');
           const idx = r.segmental?.arms?.relative_muscle_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
@@ -1472,7 +1554,8 @@
           const idx = r.segmental?.legs?.relative_muscle_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
           return p !== '-' ? `${p}% <span class="text-[10px] text-slate-400">(${idx})</span>` : '-';
         }, 'bg-indigo-50/50', 'text-indigo-900');
-
+      } else {
+        // 第三頁：雙臂、軀幹、雙腳 皮下脂肪率 (%)
         renderRow('雙臂 皮下脂肪率 (%)', r => {
           const p = r.segmental?.arms?.fat_pct ?? (r.segmentalFat?.leftArm?.percentage ?? '-');
           const idx = r.segmental?.arms?.relative_fat_index ?? (p !== '-' ? Number(((r.weight * p)/100).toFixed(1)) : '-');
