@@ -2,7 +2,7 @@
   "name": "InBody 身體組成追蹤系統",
   "short_name": "InBody",
   "description": "個人身體組成數據、四肢肌肉脂肪分析與長程演變追蹤系統",
-  "start_url": "./standalone-app.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
